@@ -5,7 +5,7 @@ const { signupRouter, signinRouter,categoryRouter,adminCategoryRouter } = requir
 
 
 router.get('/', (req, res) => {
-    res.json('홈페이지입니다.');
+    res.json('홈페이지입니다!');
 });
 
 
