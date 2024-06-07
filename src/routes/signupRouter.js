@@ -6,28 +6,26 @@ router.get('/', async (req, res) => {
     res.json('회원가입 path');
 });
 
-router.post('/', async (req, res) => {
-    const { newCategoryNum, categoryName } = req.body; 
-    console.log('Request Body:', req.body); 
+// 회원가입 api 로직
+router.post('/', async (req, res, next) => {
     try {
-        const existingCategory = await Category.findOne({ categoryNum: Number(newCategoryNum) });
-        if (existingCategory) {
-            return res.status(400).json({ error: "이미 존재하는 카테고리입니다.", data: null });
-        }
-        
-        const newCategory = await Category.create({ categoryNum: newCategoryNum, categoryName });
-
-        return res.status(201).json({ error: null, data: { categoryName: newCategory.categoryName, categoryNum: newCategory.categoryNum } });
-    } catch (error) {
-        console.error("서버 오류:", error);
-        return res.status(500).json({ error: "서버 오류입니다.", data: null });
+        const { userName, userEmail, userPw, userPhone, userAddr, agreement } = req.body;
+        const hashPw = await bcrypt.hash(userPw, 10); // 전달 받은 비밀번호 해시화
+        // 유저 데이터 db에 저장하기
+        const data = await User.create({ userName, userEmail, userPw: hashPw, userPhone: Number(userPhone), userAddr });
+        res.status(200).json(data);
+    } catch (e) {
+        next(e);
     }
 });
 
+// 이메일 중복 체크하는 로직
 router.post('/check-email', async (req, res, next) => {
     try {
         const { email } = req.body;
+        // user 데이터에서 req.body로 받은 이메일과 일치하는 사용자가 있는지 확인
         const dbEmail = await User.findOne({ userEmail: email });
+        // 일치한다면
         if (email === dbEmail.userEmail) {
             const err = new Error('이미 존재하는 email입니다.');
             err.statusCode = 400;
