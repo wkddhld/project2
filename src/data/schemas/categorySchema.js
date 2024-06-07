@@ -1,7 +1,7 @@
 const { Schema } = require('mongoose');
 //대분류 스키마
 const categorySchema = new Schema({
-    categoryNumber: {
+    categoryNum: {
         type: Number,
         required: true,
     },
@@ -11,4 +11,4 @@ const categorySchema = new Schema({
     },
 });
 
-module.exports =categorySchema;
+module.exports = categorySchema;

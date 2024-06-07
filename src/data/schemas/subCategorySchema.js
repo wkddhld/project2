@@ -1,7 +1,7 @@
 const { Schema } = require('mongoose');
 // 소분류 카테고리 스키마
-const sCategorySchema = new Schema({
-    categoryNumber: {
+const subCategorySchema = new Schema({
+    categoryNum: {
         type: Number,
         required: true,
     },
@@ -15,4 +15,4 @@ const sCategorySchema = new Schema({
     },
 });
 
-module.exports = sCategorySchema;
+module.exports = subCategorySchema;

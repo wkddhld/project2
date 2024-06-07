@@ -33,7 +33,7 @@ const productSchema = new Schema({
         type: Number,
         required: true,
     },
-    sCateogryNum: {
+    subCateogryNum: {
         type: Number,
         required: true,
     },
