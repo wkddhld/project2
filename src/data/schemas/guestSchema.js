@@ -14,11 +14,11 @@ const guestSchema = new Schema({
         required: true,
     },
     gPhone: {
-        type: number,
+        type: Number,
         required: true,
     },
     orderNum: {
-        type: number,
+        type: Number,
         required: false,
     },
 });

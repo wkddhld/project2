@@ -1,7 +1,7 @@
 const userSchema = require('./userSchema');
 const productSchema = require('./productSchema');
 const guestSchema = require('./guestSchema');
-const categorySchema = require('./categorySchema ');
+const categorySchema = require('./categorySchema');
 const orderSchema = require('./orderSchema');
 const subCategorySchema = require('./subCategorySchema');
 
