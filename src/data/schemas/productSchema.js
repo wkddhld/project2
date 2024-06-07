@@ -26,7 +26,7 @@ const productSchema = new Schema({
         required: false,
     },
     productImg: {
-        type: Blob,
+        type: Buffer,
         required: true,
     },
     categoryNum: {
