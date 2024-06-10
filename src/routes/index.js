@@ -1,7 +1,12 @@
-const signupRouter = require('./signupRouter');
-const signinRouter = require('./signinRouter');
+const apiRouter = require('express').Router();
+const authRouter = require('./authRouter');
 const adminCategoryRouter = require('./adminCategoryRouter');
-const categoryRouter= require('./categoryRouter');
+const categoryRouter = require('./categoryRouter');
+const userCrudRouter = require('./userCrudRouter');
 
+apiRouter.use('/', authRouter);
+apiRouter.use('/categories', categoryRouter);
+apiRouter.use('/admin/categories', adminCategoryRouter);
+apiRouter.use('/my-page', userCrudRouter);
 
-module.exports = { signupRouter, signinRouter ,adminCategoryRouter ,categoryRouter};
+module.exports = apiRouter;

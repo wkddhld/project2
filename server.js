@@ -1,8 +1,6 @@
 require('dotenv').config({ path: './.env' });
-const express = require('express');
+const app = require('./src/app');
 const mongoose = require('mongoose');
-
-const router = require('./src/app');
 
 mongoose.connect(process.env.MONGODB_URI);
 
@@ -18,12 +16,6 @@ mongoose.connection.on('error', () => {
     console.log('⚠️ DB와 연결 과정에서 오류가 발생하였습니다.');
     console.log(process.env.MONGODB_URI);
 });
-
-const app = express();
-app.use(express.json());
-app.use(express.urlencoded({ extended: false }));
-
-app.use('/api', router);
 
 app.listen(7008, () => {
     console.log('PORT 7008과 연결되었습니다😊');
