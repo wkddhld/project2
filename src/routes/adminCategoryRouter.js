@@ -1,7 +1,6 @@
 const express = require('express');
 const router = express.Router();
 const Category = require('../data/models/Category');
-//const authenticateAdmin = require('../middlewares/authenticateAdmin');
 
 // 대분류 카테고리 추가
 router.post('/', async (req, res, next) => {
