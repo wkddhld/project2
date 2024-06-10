@@ -83,8 +83,19 @@ router.post('/sign-in', async (req, res, next) => {
         }
         // 토큰 생성
         const jwtToken = jwt.sign(foundData, process.env.JWT_SECRET_KEY, { expiresIn: '30m' });
+        if (!foundData.isAdmin) {
+            res.cookie('userCookies', jwtToken, { httpOnly: true, secure: true, domain: 'localhost' }).json(
+                '로그인에 성공하셨습니다. 환영합니다.'
+            );
+        } else {
+            res.cookie('adminCookies', jwtToken, {
+                httpOnly: true,
+                secure: true,
+                domain: 'localhost',
+                path: '/admin',
+            }).json('로그인에 성공하셨습니다. 환영합니다.');
+        }
         // 쿠키에 토큰 담아서 보냄
-        res.cookie('token', jwtToken, { httpOnly: true, secure: true }).json('로그인에 성공하셨습니다. 환영합니다.');
     } catch (e) {
         next(e);
     }
