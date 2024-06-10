@@ -3,20 +3,30 @@ const router = express.Router();
 const Category = require('../data/models/Category');
 
 // 대분류 카테고리 조회
-router.get('/api/categories/:categoryNum', async (req, res) => {
-    const { categoryNum } = req.params;
-
+router.get('/:categoryNumber', async (req, res, next) => {
+    const { categoryNumber } = req.params;
+    if (!Number.isInteger(categoryNumber)) {
+        const err = new Error('categoryNumber field는 number type입니다.');
+        err.statusCode = 400;
+        next(err);
+        return;
+    }
     try {
-        const category = await Category.find({ categoryNum: Number(categoryNum) });
+        const category = await Category.find({ categoryNumber: Number(categoryNumber) }).lean();
 
         if (!category) {
-            return res.status(404).json({ error: "잘못된 접근입니다.", data: null });
+            const err = new Error('해당 카테고리를 찾을 수 없습니다.');
+            err.statusCode = 404;
+            next(err);
+            return; // 매우 중요.  return 해주지 않을 경우 response가 간 다음에도 이후 코드들이 실행됨
         }
 
-        return res.status(200).json({ error: null, data: { categoryName: category.categoryName, categoryNum: category.categoryNum } });
-    } catch (error) {
-        console.error("서버 오류:", error);
-        return res.status(500).json({ error: "서버 오류입니다.", data: null });
+        return res.json({
+            categoryName: category.categoryName,
+            categoryNumber: category.categoryNumber,
+        });
+    } catch (e) {
+        next(e);
     }
 });
 

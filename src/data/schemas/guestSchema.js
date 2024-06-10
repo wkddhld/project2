@@ -1,26 +1,31 @@
 const { Schema } = require('mongoose');
 
-const guestSchema = new Schema({
-    gEmail: {
-        type: String,
-        required: true,
+const guestSchema = new Schema(
+    {
+        email: {
+            type: String,
+            required: true,
+        },
+        name: {
+            type: String,
+            required: true,
+        },
+        password: {
+            type: String,
+            required: true,
+        },
+        phoneNumber: {
+            type: String,
+            required: true,
+        },
+        orderNumber: {
+            type: Number,
+            required: false,
+        },
     },
-    gName: {
-        type: String,
-        required: true,
-    },
-    gPw: {
-        type: String,
-        required: true,
-    },
-    gPhone: {
-        type: Number,
-        required: true,
-    },
-    orderNum: {
-        type: Number,
-        required: false,
-    },
-});
+    {
+        versionKey: false,
+    }
+);
 
 module.exports = guestSchema;

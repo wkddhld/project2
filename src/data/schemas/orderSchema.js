@@ -1,26 +1,31 @@
 const { Schema } = require('mongoose');
 //주문정보 스키마
-const orderSchema = new Schema({
-    orderNum: {
-        type: Number,
-        required: true,
+const orderSchema = new Schema(
+    {
+        number: {
+            type: Number,
+            required: true,
+        },
+        date: {
+            type: Date,
+            required: true,
+        },
+        receiverAddress: {
+            type: [String],
+            required: true,
+        },
+        receiverName: {
+            type: String,
+            required: true,
+        },
+        receiverPhoneNumber: {
+            type: String,
+            required: true,
+        },
     },
-    orderDate: {
-        type: Date,
-        required: true,
-    },
-    receiveAddr: {
-        type: String,
-        required: true,
-    },
-    receiveName: {
-        type: String,
-        required: true,
-    },
-    receivePhone: {
-        type: Number,
-        required: true,
-    },
-});
+    {
+        versionKey: false,
+    }
+);
 
 module.exports = orderSchema;
