@@ -20,7 +20,6 @@ router.get('/:categoryNumber', async (req, res, next) => {
             next(err);
             return; // 매우 중요.  return 해주지 않을 경우 response가 간 다음에도 이후 코드들이 실행됨
         }
-
         return res.json({
             categoryName: category.categoryName,
             categoryNumber: category.categoryNumber,
@@ -29,5 +28,10 @@ router.get('/:categoryNumber', async (req, res, next) => {
         next(e);
     }
 });
+
+
+
+
+
 
 module.exports = router;

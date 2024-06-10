@@ -12,7 +12,6 @@ router.post('/', async (req, res, next) => {
         next(err);
         return;
     }
-
     try {
         // 동일한 categoryNum을 가진 카테고리가 이미 존재하는지 확인
         const existingCategory = await Category.findOne({ categoryNumber: Number(categoryNumber) }).lean();
@@ -20,10 +19,9 @@ router.post('/', async (req, res, next) => {
             const err = new Error('이미 존재하는 카테고리입니다.');
             err.statusCode = 400;
             next(err);
-            return; // 매우 중요.  return 해주지 않을 경우 response가 간 다음에도 이후 코드들이 실행됨
+            return; // 매우 중요.
         }
         // 새로운 카테고리 생성
-        // 여기서 categoryNumber를 Number로 감싼 후 생성해줘야 하지 않나요..?
         const newCategory = await Category.create({ categoryNumber: Number(categoryNumber), categoryName });
         // 성공적으로 생성된 경우 응답 반환
         return res.status(201).json({
@@ -38,7 +36,6 @@ router.post('/', async (req, res, next) => {
 // 대분류 카테고리 수정
 router.put('/:categoryNumber', async (req, res, next) => {
     const { categoryNumber } = req.params; // URL 파라미터에서 categoryNum 추출
-    // 그냥 newCateogryNumber라고 써주면 안되는 건가요..?
     const { newCategoryNumber, categoryName } = req.body; // 요청 본문에서 새로운 categoryNum과 categoryName 추출
 
     if (!Number.isInteger(newCategoryNumber) || !!Number.isInteger(categoryNumber)) {
@@ -74,6 +71,7 @@ router.put('/:categoryNumber', async (req, res, next) => {
 // 대분류 카테고리 삭제
 router.delete('/:categoryNumber', async (req, res, next) => {
     const { categoryNumber } = req.params; // URL 파라미터에서 categoryNumber 추출
+    
     if (!Number.isInteger(categoryNumber)) {
         const err = new Error('categoryNumber field는 number type입니다.');
         err.statusCode = 400;
@@ -96,5 +94,4 @@ router.delete('/:categoryNumber', async (req, res, next) => {
         next(e);
     }
 });
-
 module.exports = router;
