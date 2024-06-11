@@ -1,10 +1,6 @@
 const express = require('express');
 const router = express.Router();
 const { User } = require('../data');
-const cookieParser = require('cookie-parser');
-
-// 쿠키사용
-router.use(cookieParser);
 
 //READ
 router.get('/', async (req, res, next) => {
