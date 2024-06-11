@@ -4,15 +4,14 @@ const { subCategory, Category, Product } = require('../data');
 
 // 대분류 카테고리별 상품 조회
 router.get('/:categoryNumber', async (req, res, next) => {
-    const { categoryNumber } = req.params;
-    if (!Number.isInteger(categoryNumber)) {
-        const err = new Error('categoryNumber field는 number type입니다.');
-        err.statusCode = 400;
-        next(err);
-        return;
-    }
-
     try {
+        const { categoryNumber } = req.params;
+        if (!Number.isInteger(Number(categoryNumber))) {
+            const err = new Error('categoryNumber field는 number type이어야 합니다.');
+            err.statusCode = 400;
+            next(err);
+            return;
+        }
         const categoryProduct = await Product.find({ categoryNumber: Number(categoryNumber) }).lean();
 
         if (!categoryProduct) {
@@ -23,7 +22,6 @@ router.get('/:categoryNumber', async (req, res, next) => {
         }
 
         return res.json({
-            image: categoryProduct.image,
             name: categoryProduct.name,
             price: categoryProduct.price,
         });
