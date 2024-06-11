@@ -21,13 +21,15 @@ const productSchema = new Schema(
         information: {
             type: String,
             required: false,
+            default: '',
         },
         origin: {
             type: String,
             required: false,
+            default: '',
         },
         image: {
-            type: Buffer,
+            type: String,
             required: true,
         },
         categoryNumber: {

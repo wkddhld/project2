@@ -27,7 +27,7 @@ const userSchema = new Schema(
             required: false,
             default: false,
         },
-        orderNum: {
+        orderNumber: {
             type: Number,
             required: false,
         },
