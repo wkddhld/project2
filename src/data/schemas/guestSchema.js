@@ -18,10 +18,6 @@ const guestSchema = new Schema(
             type: String,
             required: true,
         },
-        orderNumber: {
-            type: Number,
-            required: false,
-        },
     },
     {
         versionKey: false,

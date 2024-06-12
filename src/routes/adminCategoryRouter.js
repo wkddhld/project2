@@ -5,7 +5,7 @@ const Category = require('../data/models/Category');
 // 대분류 카테고리 추가
 router.post('/', async (req, res, next) => {
     const { categoryNumber, categoryName } = req.body; // 요청 본문에서 categoryNum과 categoryName 추출
-    if (!Number.isInteger(categoryNumber)) {
+    if (!Number.isInteger(Number(categoryNumber))) {
         const err = new Error('categoryNumber field는 number type입니다.');
         err.statusCode = 400;
         next(err);
@@ -27,7 +27,7 @@ router.post('/', async (req, res, next) => {
         // 성공적으로 생성된 경우 응답 반환
         return res.status(201).json({
             categoryName: newCategory.categoryName,
-            categoryNumber: newCategory.categoryNumber,
+            categoryNumber: Number(newCategory.categoryNumber),
         });
     } catch (e) {
         next(e);
@@ -37,11 +37,10 @@ router.post('/', async (req, res, next) => {
 // 대분류 카테고리 수정
 router.put('/:categoryNumber', async (req, res, next) => {
     const { categoryNumber } = req.params; // URL 파라미터에서 categoryNum 추출
-    // 그냥 newCateogryNumber라고 써주면 안되는 건가요..?
     const { newCategoryNumber, categoryName } = req.body; // 요청 본문에서 새로운 categoryNum과 categoryName 추출
 
-    if (!Number.isInteger(newCategoryNumber) || !!Number.isInteger(categoryNumber)) {
-        const err = new Error('categoryNumber field는 number type입니다.');
+    if (!Number.isInteger(Number(newCategoryNumber)) || !!Number.isInteger(Number(categoryNumber))) {
+        const err = new Error('categoryNumber field는 number type이어야 합니다.');
         err.statusCode = 400;
         next(err);
         return;
@@ -63,7 +62,7 @@ router.put('/:categoryNumber', async (req, res, next) => {
 
         return res.json({
             categoryName: category.categoryName,
-            categoryNumber: category.categoryNumber,
+            categoryNumber: Number(category.categoryNumber),
         });
     } catch (e) {
         next(e);
@@ -73,8 +72,8 @@ router.put('/:categoryNumber', async (req, res, next) => {
 // 대분류 카테고리 삭제
 router.delete('/:categoryNumber', async (req, res, next) => {
     const { categoryNumber } = req.params; // URL 파라미터에서 categoryNumber 추출
-    if (!Number.isInteger(categoryNumber)) {
-        const err = new Error('categoryNumber field는 number type입니다.');
+    if (!Number.isInteger(Number(categoryNumber))) {
+        const err = new Error('categoryNumber field는 number type어야 합니다.');
         err.statusCode = 400;
         next(err);
         return;
