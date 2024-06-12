@@ -6,7 +6,15 @@ const { User } = require('../data');
 router.get('/', async (req, res, next) => {
     try {
         // 쿠키의 userID
-        const userId = req.cookies.userId;
+        const { userCookies, adminCookies } = req.cookies;
+        let userId;
+
+        if(userCookies){
+            userId = userCookies;
+        }
+        else if(adminCookies){
+            userId = adminCookies;
+        }
 
         // userID가 없을경우 403에러 반환
         if (!userId) {
@@ -35,7 +43,15 @@ router.get('/', async (req, res, next) => {
 router.put('/', async (req, res, next) => {
     try {
         // 쿠키의 userID
-        const userId = req.cookies.userId;
+        const { userCookies, adminCookies } = req.cookies;
+        let userId;
+
+        if(userCookies){
+            userId = userCookies;
+        }
+        else if(adminCookies){
+            userId = adminCookies;
+        }
 
         if (!userId) {
             const err = new Error('인증되지 않은 사용자입니다.');
@@ -65,7 +81,7 @@ router.put('/', async (req, res, next) => {
         const result = await User.updateOne({ _id: userId }, data);
         // update가 제대로 이루어졌는지 확인하는 코드
         if (result.modifiedCount === 0) {
-            const err = new Error('존재하지 안히는 회원입니다.');
+            const err = new Error('존재하지 않는 회원입니다.');
             err.statusCode = 404;
             next(err);
             return;
@@ -80,7 +96,18 @@ router.put('/', async (req, res, next) => {
 //DELETE
 router.delete('/', async (req, res, next) => {
     try {
-        const userId = req.cookies.userId;
+        // 쿠키의 userID
+        const { userCookies, adminCookies } = req.cookies;
+        let userId;
+
+        if(userCookies){
+            userId = userCookies;
+        }
+        else if(adminCookies){
+            userId = adminCookies;
+        }
+        
+        
         if (!userId) {
             const err = new Error('인증되지 않은 사용자입니다.');
             err.statusCode = 403;
