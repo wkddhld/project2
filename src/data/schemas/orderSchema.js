@@ -18,8 +18,16 @@ const orderSchema = new Schema(
             type: String,
             required: true,
         },
-        receiverPhoneNumber: {
+        receiverPhone: {
+            terPhoneNumbype: String,
+            required: true,
+        },
+        email: {
             type: String,
+            required: true,
+        },
+        products:{
+            type: [{String, Number, Number}], // [{상품명, 상품갯수, 상품가격}]
             required: true,
         },
     },
