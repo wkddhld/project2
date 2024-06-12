@@ -1,8 +1,8 @@
-const cookieParser = require('cookie-parser');
+
 const jwt = require('jsonwebtoken');
 
 const isAuthenticatedMiddleware = (req, res, next) => {
-    cookieParser()(req, res, () => {
+    (req, res, () => {
         const { userCookies, adminCookies } = req.cookies;
         // req.cookies에 userCookies or adminCookies가 있으면 회원 or 관리자
         // 없으면 비회원

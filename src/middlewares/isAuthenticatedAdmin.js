@@ -1,9 +1,8 @@
-const cookieParser = require('cookie-parser');
 const jwt = require('jsonwebtoken');
 
 // 관리자인지 확인하는 미들웨어
 const isAuthenticatedAdminMiddleware = (req, res, next) => {
-    cookieParser()(req, res, () => {
+    (req, res, () => {
         // req.cookies에 adminCookies가 있으면 관리자, 없으면 관리자 아님
         if (req.cookies.adminCookies) {
             // jwt 토큰을 decoding해서 거기서 isAdmin을 찾아서 로직 짜야함(디코딩 안되면 접근 오류)
