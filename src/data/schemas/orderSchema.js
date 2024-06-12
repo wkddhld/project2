@@ -6,20 +6,33 @@ const orderSchema = new Schema(
             type: Number,
             required: true,
         },
+        name: {
+            type: Number,
+            required: true,
+        },
         date: {
             type: Date,
             required: true,
         },
-        receiverAddress: {
+        address: {
             type: [String],
             required: true,
         },
-        receiverName: {
+        email: {
             type: String,
             required: true,
         },
-        receiverPhoneNumber: {
+        phoneNumber: {
             type: String,
+            required: true,
+        },
+        products: {
+            type: [{ String, Number, Number }], // [{상품명, 상품갯수, 상품가격}]
+            required: true,
+        },
+
+        orderState: {
+            type: Boolean,
             required: true,
         },
     },

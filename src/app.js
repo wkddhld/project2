@@ -3,11 +3,14 @@
 // 그렇기 때문에 server.js에 express app을 setup해주는 코드들이 있으면 안 됨
 const express = require('express');
 const apiRouter = require('./routes');
+const cookieParser = require('cookie-parser');
 
 const app = express();
 app.use(express.json());
 app.use(express.urlencoded({ extended: false }));
 
+// 쿠키 해석해서 json 객체로 만들어주는 친구, 없으면 우리가 직접 json으로 만들어줘야 함, 원래는 string 값으로 들어옴
+app.use(cookieParser());
 app.use('/api', apiRouter);
 
 // 예외 핸들러(해당되는 URL이 없을 경우)

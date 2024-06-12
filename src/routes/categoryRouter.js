@@ -4,16 +4,14 @@ const { Product } = require('../data');
 
 // 대분류 카테고리별 상품 조회
 router.get('/:categoryNumber', async (req, res, next) => {
-    const { categoryNumber } = req.params;
-    
-    // categoryNumber를 숫자로 변환 후 체크
-    const categoryNumberInt = parseInt(categoryNumber, 10);
-    if (isNaN(categoryNumberInt)) {
-        const err = new Error('categoryNumber field는 number type이어야 합니다.');
-        err.statusCode = 400;
-        return next(err);
-    }
     try {
+        const { categoryNumber } = req.params;
+        if (!Number.isInteger(Number(categoryNumber))) {
+            const err = new Error('categoryNumber field는 number type이어야 합니다.');
+            err.statusCode = 400;
+            next(err);
+            return;
+        }
         const categoryProduct = await Product.find({ categoryNumber: Number(categoryNumber) }).lean();
 
         if (!categoryProduct) {
