@@ -1,6 +1,6 @@
 const express = require('express');
 const router = express.Router();
-const { subCategory, Category, Product } = require('../data');
+const { Product } = require('../data');
 
 // 대분류 카테고리별 상품 조회
 router.get('/:categoryNumber', async (req, res, next) => {
@@ -20,14 +20,16 @@ router.get('/:categoryNumber', async (req, res, next) => {
             next(err);
             return; // 매우 중요.  return 해주지 않을 경우 response가 간 다음에도 이후 코드들이 실행됨
         }
-
         return res.json({
+            image: categoryProduct.image,
             name: categoryProduct.name,
             price: categoryProduct.price,
         });
     } catch (e) {
+        
         next(e);
     }
 });
+
 
 module.exports = router;

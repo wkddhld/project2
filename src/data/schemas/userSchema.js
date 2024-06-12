@@ -27,6 +27,10 @@ const userSchema = new Schema(
             required: false,
             default: false,
         },
+        orderNumber: {
+            type: [Number],
+            required: false,
+        },
     },
     {
         versionKey: false,
