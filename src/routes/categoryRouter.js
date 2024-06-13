@@ -21,15 +21,12 @@ router.get('/:categoryNumber', async (req, res, next) => {
             return; // 매우 중요.  return 해주지 않을 경우 response가 간 다음에도 이후 코드들이 실행됨
         }
         return res.json({
-            image: categoryProduct.image,
-            name: categoryProduct.name,
-            price: categoryProduct.price,
+            err: null,
+            data: { image: categoryProduct.image, name: categoryProduct.name, price: categoryProduct.price },
         });
     } catch (e) {
-        
         next(e);
     }
 });
-
 
 module.exports = router;

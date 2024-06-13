@@ -3,6 +3,7 @@ const router = express.Router();
 const { Order, Guest } = require('../data');
 const { isLogined } = require('../middlewares');
 const { customAlphabet } = require('nanoid');
+// import { customAlphabet } f1rom 'nanoid';
 const jwt = require('jsonwebtoken');
 const bcrypt = require('bcrypt');
 
@@ -28,7 +29,7 @@ router.get('/', async (req, res, next) => {
             return;
         }
         // 주문정보 전송
-        res.json(order);
+        res.json({ err: null, data: order });
     } catch (e) {
         next(e);
     }
@@ -68,10 +69,8 @@ router.put('/:orderNumber', async (req, res, next) => {
                     err.statusCode = 401;
                     return next(err);
                 }
-
-                // 토큰이 유효하지 않을 때(= 위변조 여부 판단)
                 if (err.name === 'JsonWebTokenError') {
-                    const err = new Error('유효하지 않은 토큰입니다. 다시 로그인 해주세요.');
+                    const err = new Error('유효하지 않거나 손상된 토큰입니다. 다시 로그인 해주세요.');
                     err.statusCode = 401;
                     return next(err);
                 }
@@ -85,7 +84,7 @@ router.put('/:orderNumber', async (req, res, next) => {
                     return next(err);
                 }
                 if (err.name === 'JsonWebTokenError') {
-                    const err = new Error('유효하지 않은 토큰입니다. 다시 로그인 해주세요.');
+                    const err = new Error('유효하지 않거나 손상된 토큰입니다. 다시 로그인 해주세요.');
                     err.statusCode = 401;
                     return next(err);
                 }
@@ -149,20 +148,6 @@ router.put('/:orderNumber', async (req, res, next) => {
             return next(err);
         }
 
-        // if (
-        //     !receiverAddress ||
-        //     !receiverEmail ||
-        //     !receiverName ||
-        //     !receiverPhoneNumber ||
-        //     !products ||
-        //     !Array.isArray(products) ||
-        //     products.length === 0
-        // ) {
-        //     const err = new Error('잘못된 요청입니다.');
-        //     next(err);
-        //     return;
-        // }
-
         const data = {
             name,
             date: new Date(),
@@ -181,7 +166,7 @@ router.put('/:orderNumber', async (req, res, next) => {
             next(err);
             return;
         }
-        res.json({ message: '주문이 정상적으로 수정됐습니다.' });
+        res.json({ err: null, data: '주문이 정상적으로 수정됐습니다.' });
     } catch (e) {
         next(e);
     }
@@ -192,22 +177,8 @@ router.post('/', async (req, res, next) => {
     try {
         const { products, name, phoneNumber, email, postAddress, address, detailAddress, password, confirmPassword } =
             req.body;
-        // 데이터가 잘들어왔는지 확인
-        // 주문자(=수신인) 정보(이름, 전화번호, 이메일, 주소, 비밀번호(비회원일 경우만)), 상품정보
-        // if (
-        //     !password ||
-        //     !email ||
-        //     !name ||
-        //     !phoneNumber ||
-        //     !products ||
-        //     !Array.isArray(products) ||
-        //     products.length === 0
-        // ) {
-        //     const err = new Error('잘못된 요청입니다.');
-        //     next(err);
-        //     return;
-        // }
-        // !products와 products.length의 차이가 뭔가요...?
+
+        // products가 안 들어왔거나, 배열 형태가 아니거나 상품이 하나도 없을 경우
         if (!products || !Array.isArray(products) || products.length === 0) {
             const err = new Error('존재하지 않는 상품입니다.');
             err.statusCode = 400;
@@ -301,7 +272,7 @@ router.post('/', async (req, res, next) => {
             // 비회원 위한 쿠키 및 토큰 생성
             const token = jwt.sign(result, process.env.GUSET_SECRET_KEY, { expiresIn: '30m' });
             res.cookie('gusetCookies', token, { httpOnly: true, secure: true });
-            res.status(204).json('주문 완료되었습니다.');
+            res.status(204).json({ err: null, data: '주문 완료되었습니다.' });
             return;
         }
         // data를 db에 저장
@@ -315,27 +286,18 @@ router.post('/', async (req, res, next) => {
             orderState: true,
         };
         const userOrder = new Order(userData);
-        // const result = await userOrder.save();
         await userOrder.save();
-        res.status(204).json('주문 완료되었습니다.');
+        res.status(204).json({ err: null, data: '주문 완료되었습니다.' });
     } catch (e) {
         next(e);
     }
 });
 
-//주문삭제
+//주문 취소
 router.put('/cancel/:orderNumber', async (req, res, next) => {
     try {
         // 주문 정보 받아오기
         const { orderNumber } = req.params;
-
-        // 잘못된 요청
-        // if (!OrderNumber) {
-        //     const err = new Error('잘못된 요청입니다.');
-        //     err.statusCode = 400;
-        //     next(err);
-        //     return;
-        // }
 
         // 주문번호가 number type이 아닌 경우
         if (!Number.isInteger(Number(orderNumber))) {
@@ -344,14 +306,6 @@ router.put('/cancel/:orderNumber', async (req, res, next) => {
             return next(err);
         }
 
-        // const result = await Order.deleteOne({ _id: OrderNumber });
-        // // 주문정보가 없을시
-        // if (result.deletedCount === 0) {
-        //     const err = new Error('주문을 찾을 수 없습니다.');
-        //     err.statusCode = 404;
-        //     next(err);
-        //     return;
-        // }
         const result = await Order.updateOne({ number: Number(orderNumber) }, { orderSate: false });
         // update가 제대로 됐는지 확인하는 코드
         if (result.modifiedCount === 0) {
@@ -360,8 +314,10 @@ router.put('/cancel/:orderNumber', async (req, res, next) => {
             next(err);
             return;
         }
-        res.json({ message: '주문이 취소되었습니다.' });
+        res.json({ err: null, data: '주문이 취소되었습니다.' });
     } catch (e) {
         next(e);
     }
 });
+
+module.exports = router;

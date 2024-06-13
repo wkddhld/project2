@@ -9,10 +9,9 @@ router.get('/', async (req, res, next) => {
         const { userCookies, adminCookies } = req.cookies;
         let userId;
 
-        if(userCookies){
+        if (userCookies) {
             userId = userCookies;
-        }
-        else if(adminCookies){
+        } else if (adminCookies) {
             userId = adminCookies;
         }
 
@@ -28,10 +27,8 @@ router.get('/', async (req, res, next) => {
 
         // 4가지 user정보 반환
         res.json({
-            name: user.name,
-            email: user.email,
-            address: user.address,
-            phonenumber: user.phoneNumber,
+            err: null,
+            data: { name: user.name, email: user.email, address: user.address, phonenumber: user.phoneNumber },
         });
     } catch (e) {
         // 서버 에러가 났을 경우
@@ -46,10 +43,9 @@ router.put('/', async (req, res, next) => {
         const { userCookies, adminCookies } = req.cookies;
         let userId;
 
-        if(userCookies){
+        if (userCookies) {
             userId = userCookies;
-        }
-        else if(adminCookies){
+        } else if (adminCookies) {
             userId = adminCookies;
         }
 
@@ -87,7 +83,7 @@ router.put('/', async (req, res, next) => {
             return;
         }
 
-        res.status(201).send(data);
+        res.status(201).send({ err: null, data: data });
     } catch (e) {
         next(e);
     }
@@ -100,14 +96,12 @@ router.delete('/', async (req, res, next) => {
         const { userCookies, adminCookies } = req.cookies;
         let userId;
 
-        if(userCookies){
+        if (userCookies) {
             userId = userCookies;
-        }
-        else if(adminCookies){
+        } else if (adminCookies) {
             userId = adminCookies;
         }
-        
-        
+
         if (!userId) {
             const err = new Error('인증되지 않은 사용자입니다.');
             err.statusCode = 403;
@@ -132,7 +126,7 @@ router.delete('/', async (req, res, next) => {
             next(err);
             return;
         }
-        res.send('성공적으로 삭제했습니다.');
+        res.json({ err: null, data: '성공적으로 삭제했습니다.' });
     } catch (e) {
         next(e);
     }
