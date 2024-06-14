@@ -36,7 +36,7 @@ const productSchema = new Schema(
             type: Number,
             required: true,
         },
-        subCateogryNumber: {
+        subCategoryNumber: {
             type: Number,
             required: true,
         },
