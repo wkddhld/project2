@@ -5,8 +5,8 @@ const Category = require('../data/models/Category');
 // 대분류 카테고리 추가
 router.post('/', async (req, res, next) => {
     const { categoryNumber, categoryName } = req.body; // 요청 본문에서 categoryNum과 categoryName 추출
-    if (!Number.isInteger(Number(categoryNumber))) {
-        const err = new Error('categoryNumber field는 number type입니다.');
+    if (!Number.isInteger(Number(categoryNumber)) || categoryNumber.length > 2) {
+        const err = new Error('categoryNumber field는 숫자값이이어야하고 2자리 이하여야 합니다.');
         err.statusCode = 400;
         next(err);
         return;
@@ -23,12 +23,10 @@ router.post('/', async (req, res, next) => {
         // 새로운 카테고리 생성
         const newCategory = await Category.create({ categoryNumber: Number(categoryNumber), categoryName });
         // 성공적으로 생성된 경우 응답 반환
-        return res
-            .status(201)
-            .json({
-                err: null,
-                data: { categoryName: newCategory.categoryName, categoryNumber: Number(newCategory.categoryNumber) },
-            });
+        return res.status(201).json({
+            err: null,
+            data: { categoryName: newCategory.categoryName, categoryNumber: Number(newCategory.categoryNumber) },
+        });
     } catch (e) {
         next(e);
     }
