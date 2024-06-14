@@ -116,7 +116,6 @@ router.post('/', upload.single('file'), async (req, res, next) => {
             },
         });
     } catch (e) {
-        console.error(e);
         next(e);
     }
 });
