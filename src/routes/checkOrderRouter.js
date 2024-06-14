@@ -19,7 +19,7 @@ router.get('/', async (req, res, next) => {
         const orderNumer = req.query.orderNumer;
 
         // 주문번호 검색z
-        const order = await Order.findOne({ number: Number(orderNumer) });
+        const order = await Order.findOne({ number: orderNumer });
         // 주문번호가 없을시
         if (!order) {
             const err = 404;
@@ -43,7 +43,7 @@ router.put('/:orderNumber', async (req, res, next) => {
         const { userCookies, guestCookies } = req.cookies;
 
         // 주문번호가 number type이 아닌 경우
-        if (!Number.isInteger(Number(orderNumber))) {
+        if (!Number.isInteger(orderNumber)) {
             const err = new Error('해당하는 주문 내역을 찾을 수 없습니다.');
             err.statusCode = 404;
             return next(err);
@@ -156,7 +156,7 @@ router.put('/:orderNumber', async (req, res, next) => {
             orderState: true,
         };
 
-        const result = await Order.updateOne({ number: Number(orderNumber) }, data);
+        const result = await Order.updateOne({ number:orderNumber }, data);
         // update가 제대로 이루어졌는지 확인하는 코드
         if (result.modifiedCount === 0) {
             const err = new Error('주문을 찾을 수 없습니다.');
@@ -197,7 +197,7 @@ router.post('/', async (req, res, next) => {
         }
 
         // email이 '@'를 포함하지 않거나 ".com"으로 끝나지 않는 경우
-        if (!email.contains('@') || email.search('.com$') === -1) {
+        if (!email.includes('@') || email.search('.com$') === -1) {
             const err = new Error('이메일 형식과 맞지 않습니다.');
             err.statusCode = 400;
             return next(err);
@@ -230,7 +230,7 @@ router.post('/', async (req, res, next) => {
         // 쿠키가 없으면 비회원
         if (!req.cookies) {
             // 비밀번호가 숫자값이 아니거나 4자리가 아닌 경우
-            if (!Number.isInteger(Number(password)) || password.length === 4) {
+            if (!Number.isInteger(password) || password.length === 4) {
                 const err = new Error('비밀번호는 네 자리 숫자값이어야 합니다.');
                 err.statusCode = 400;
                 return next(err);
@@ -298,13 +298,13 @@ router.put('/cancel/:orderNumber', async (req, res, next) => {
         const { orderNumber } = req.params;
 
         // 주문번호가 number type이 아닌 경우
-        if (!Number.isInteger(Number(orderNumber))) {
+        if (!Number.isInteger(orderNumber)) {
             const err = new Error('해당하는 주문 내역을 찾을 수 없습니다.');
             err.statusCode = 404;
             return next(err);
         }
 
-        const result = await Order.updateOne({ number: Number(orderNumber) }, { orderSate: false });
+        const result = await Order.updateOne({ number:orderNumber}, { orderSate: false });
         // update가 제대로 됐는지 확인하는 코드
         if (result.modifiedCount === 0) {
             const err = new Error('주문을 찾을 수 없습니다.');
