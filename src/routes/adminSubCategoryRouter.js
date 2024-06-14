@@ -73,7 +73,7 @@ router.put('/:subCategoryNumber', async (req, res, next) => {
 
     try {
         const updatedSubCategory = await subCategory.findOneAndUpdate(
-            { number:subCategoryNumber },
+            { number:Number(subCategoryNumber) },
             {
                 number: newSubCategoryNumber,
                 name: subCategoryName,
@@ -107,7 +107,7 @@ router.put('/:subCategoryNumber', async (req, res, next) => {
 router.delete('/:subCategoryNumber', async (req, res, next) => {
     const { subCategoryNumber } = req.params; // URL 파라미터에서 subCategoryNumber 추출
 
-    if (!Number.isInteger(subCategoryNumber)) {
+    if (!Number.isInteger(Number(subCategoryNumber))) {
         const err = new Error('소분류 카테고리 번호는 숫자값이어야 합니다.');
         err.statusCode = 400;
         next(err);
@@ -116,7 +116,7 @@ router.delete('/:subCategoryNumber', async (req, res, next) => {
 
     try {
         // subCategoryNumber에 해당하는 소분류 카테고리를 찾고 삭제
-        const deletedSubCategory = await subCategory.findOneAndDelete({ number: subCategoryNumber });
+        const deletedSubCategory = await subCategory.findOneAndDelete({ number: Number(subCategoryNumber) });
 
         // 소분류 카테고리를 찾지 못한 경우
         if (!deletedSubCategory) {
