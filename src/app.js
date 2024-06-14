@@ -12,15 +12,14 @@ const app = express();
 
 app.use(express.json());
 app.use(express.urlencoded({ extended: false }));
-app.use(bodyParser.json());
-app.use(bodyParser.urlencoded({ extended: true }));
+// app.use(bodyParser.json());
+// app.use(bodyParser.urlencoded({ extended: true }));
 app.use(cors());
 
-app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
 // 쿠키 해석해서 json 객체로 만들어주는 친구, 없으면 우리가 직접 json으로 만들어줘야 함, 원래는 string 값으로 들어옴
 app.use(cookieParser());
 app.use('/api', apiRouter);
-
+app.use('/api/uploads', express.static(path.join(__dirname, 'productImages')));
 // 예외 핸들러(해당되는 URL이 없을 경우)
 app.use((req, res, next) => {
     res.status(404).json({ err: '해당 페이지를 찾을 수 없습니다.', data: null });
