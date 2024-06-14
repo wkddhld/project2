@@ -43,7 +43,7 @@ router.put('/:orderNumber', async (req, res, next) => {
         const { userCookies, guestCookies } = req.cookies;
 
         // 주문번호가 number type이 아닌 경우
-        if (!Number.isInteger(orderNumber)) {
+        if (!Number.isInteger(Number(orderNumber))) {
             const err = new Error('해당하는 주문 내역을 찾을 수 없습니다.');
             err.statusCode = 404;
             return next(err);
@@ -156,7 +156,7 @@ router.put('/:orderNumber', async (req, res, next) => {
             orderState: true,
         };
 
-        const result = await Order.updateOne({ number:orderNumber }, data);
+        const result = await Order.updateOne({ number:Number(orderNumber) }, data);
         // update가 제대로 이루어졌는지 확인하는 코드
         if (result.modifiedCount === 0) {
             const err = new Error('주문을 찾을 수 없습니다.');
@@ -298,13 +298,13 @@ router.put('/cancel/:orderNumber', async (req, res, next) => {
         const { orderNumber } = req.params;
 
         // 주문번호가 number type이 아닌 경우
-        if (!Number.isInteger(orderNumber)) {
+        if (!Number.isInteger(Number(orderNumber)1)) {
             const err = new Error('해당하는 주문 내역을 찾을 수 없습니다.');
             err.statusCode = 404;
             return next(err);
         }
 
-        const result = await Order.updateOne({ number:orderNumber}, { orderSate: false });
+        const result = await Order.updateOne({ number:Number(orderNumber)}, { orderSate: false });
         // update가 제대로 됐는지 확인하는 코드
         if (result.modifiedCount === 0) {
             const err = new Error('주문을 찾을 수 없습니다.');
