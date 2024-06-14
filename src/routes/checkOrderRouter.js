@@ -1,9 +1,7 @@
 const express = require('express');
 const router = express.Router();
 const { Order, Guest } = require('../data');
-const { isLogined } = require('../middlewares');
 const { customAlphabet } = require('nanoid');
-// import { customAlphabet } f1rom 'nanoid';
 const jwt = require('jsonwebtoken');
 const bcrypt = require('bcrypt');
 
@@ -98,7 +96,7 @@ router.put('/:orderNumber', async (req, res, next) => {
         }
 
         // email이 '@'를 포함하지 않거나 ".com"으로 끝나지 않는 경우
-        if (!email.contains('@') || email.search('.com$') === -1) {
+        if (!email.includes('@') || email.search('.com$') === -1) {
             const err = new Error('이메일 형식과 맞지 않습니다.');
             err.statusCode = 400;
             return next(err);
