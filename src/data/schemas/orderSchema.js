@@ -7,7 +7,7 @@ const orderSchema = new Schema(
             required: true,
         },
         name: {
-            type: Number,
+            type: String,
             required: true,
         },
         date: {
@@ -26,19 +26,35 @@ const orderSchema = new Schema(
             type: String,
             required: true,
         },
+        // [{상품명, 상품갯수, 상품가격}]
         products: {
-            type: [{ String, Number, Number }], // [{상품명, 상품갯수, 상품가격}]
+            type: [
+                {
+                    name: {
+                        type: String,
+                        required: true,
+                    },
+                    quantity: {
+                        type: String,
+                        required: true,
+                    },
+                    price: {
+                        type: String,
+                        required: true,
+                    },
+                },
+            ],
             required: true,
         },
 
         orderState: {
             type: Boolean,
             required: true,
+            default: false,
         },
     },
     {
         versionKey: false,
     }
 );
-
 module.exports = orderSchema;
