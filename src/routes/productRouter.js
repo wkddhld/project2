@@ -126,7 +126,7 @@ router.put('/:productNumber', upload.single('file'), async (req, res, next) => {
         const { productNumber } = req.params;
 
         // productNumber가 number type이 아닐 경우 에러 핸들러로 에러 보냄
-        if (!Number.isInteger(productNumber)) {
+        if (!Number.isInteger(Number(productNumber))) {
             const err = new Error('요청하는 페이지를 찾을 수 없습니다.');
             err.statusCode = 404;
             return next(err);
@@ -141,7 +141,7 @@ router.put('/:productNumber', upload.single('file'), async (req, res, next) => {
 
         const { name, price, stock, information, categoryNumber, subCategoryNumber } = req.body;
 
-        const foundProduct = await Product.findOne({ number:productNumber }).lean();
+        const foundProduct = await Product.findOne({ number:Number(productNumber) }).lean();
         // productNumber에 해당하는 상품을 찾지 못할 경우 에러 핸들러로 에러 보냄
         if (foundProduct === null) {
             const err = new Error('요청하는 페이지를 찾을 수 없습니다.');
@@ -183,7 +183,7 @@ router.put('/:productNumber', upload.single('file'), async (req, res, next) => {
         }
 
         // 변경하려는 상품의 이미지 찾아서 지우는 코드
-        const exist = await Image.findOne({ filename: productNumber }).lean();
+        const exist = await Image.findOne({ filename: Number(productNumber) }).lean();
         fs.unlinkSync(exist.path);
 
         // 새로운 상품 번호 생성
@@ -191,13 +191,13 @@ router.put('/:productNumber', upload.single('file'), async (req, res, next) => {
 
         // 변경하려는 상품의 이미지 업데이트
         await Image.updateOne(
-            { filename: productNumber },
+            { filename: Number(productNumber) },
             { filename: Number(newProductNumber), path: req.file.path, originalName: req.file.originalname }
         );
 
         // 상품 업데이트
         const data = await Product.updateOne(
-            { number: productNumber },
+            { number: Number(productNumber) },
             {
                 number: Number(newProductNumber),
                 name,
@@ -219,13 +219,13 @@ router.put('/:productNumber', upload.single('file'), async (req, res, next) => {
 router.delete('/:productNumber', async (req, res, next) => {
     const { productNumber } = req.params;
     // productNumber가 숫자값이 아닌 경우
-    if (!Number.isInteger(productNumber)) {
+    if (!Number.isInteger(Number(productNumber))) {
         const err = new Error('요청하는 페이지를 찾을 수 없습니다.');
         err.statusCode = 404;
         return next(err);
     }
     // productNumber에 해당하는 상품이 없을 경우
-    const foundData = await Product.findOne({ number: productNumber }).lean();
+    const foundData = await Product.findOne({ number: Number(productNumber) }).lean();
     if (foundData === null) {
         const err = new Error('요청하는 페이지를 찾을 수 없습니다.');
         err.statusCode = 404;
@@ -233,12 +233,12 @@ router.delete('/:productNumber', async (req, res, next) => {
     }
 
     // 삭제하려는 상품의 이미지 찾아서 지우는 코드
-    const exist = await Image.findOne({ filename: productNumber }).lean();
+    const exist = await Image.findOne({ filename: Number(productNumber) }).lean();
     fs.unlinkSync(exist.path);
 
     // productNumber와 일치하는 이미지와 상품 삭제
-    await Product.deleteOne({ number:productNumber });
-    await Image.deleteOne({ filename:productNumber });
+    await Product.deleteOne({ number:Number(productNumber) });
+    await Image.deleteOne({ filename:Number(productNumber) });
     res.status(204).json({ err: null, data: '해당 상품을 삭제하였습니다.' });
 });
 module.exports = router;
