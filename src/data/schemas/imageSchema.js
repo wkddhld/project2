@@ -1,7 +1,7 @@
 const { Schema } = require('mongoose');
 const fileSchema = new Schema({
     filename: {
-        type: String,
+        type: Number,
         required: true,
     },
     path: {
