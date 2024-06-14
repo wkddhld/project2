@@ -35,7 +35,7 @@ router.get('/:categoryNumber', async (req, res, next) => {
         const { categoryNumber } = req.params;
 
         // categoryNumber가 숫자인지 확인
-        if (!Number.isInteger(categoryNumber) || categoryNumber.length > 2) {
+        if (!Number.isInteger(Number(categoryNumber)) || categoryNumber.length > 2) {
             const err = new Error('대분류 카테고리는 숫자값이면서 2자리 이하여야 합니다.');
             err.statusCode = 400;
             next(err);
@@ -43,7 +43,7 @@ router.get('/:categoryNumber', async (req, res, next) => {
         }
 
         // categoryNumber에 해당하는 상품 조회
-        const categoryProducts = await Product.find({ categoryNumber: categoryNumber }).lean();
+        const categoryProducts = await Product.find({ categoryNumber: Number(categoryNumber) }).lean();
 
         // 해당 카테고리의 상품이 없는 경우
         if (!categoryProducts || categoryProducts.length === 0) {
@@ -71,14 +71,14 @@ router.get('/:categoryNumber', async (req, res, next) => {
 router.get('/:categoryNumber/:subCategoryNumber', async (req, res, next) => {
     const { categoryNumber, subCategoryNumber } = req.params;
 
-    if (!Number.isInteger(categoryNumber) || categoryNumber.length > 2) {
+    if (!Number.isInteger(Number(categoryNumber)) || categoryNumber.length > 2) {
         const err = new Error('대분류 카테고리는 숫자값이면서 2자리 이하여야 합니다.');
         err.statusCode = 400;
         next(err);
         return;
     }
 
-    if (!Number.isInteger(subCategoryNumber) || subCategoryNumber.length !== 3) {
+    if (!Number.isInteger(Number(subCategoryNumber)) || subCategoryNumber.length !== 3) {
         const err = new Error('소분류 카테고리는 숫자값이면서 3자리여야 합니다.');
         err.statusCode = 400;
         next(err);
