@@ -8,14 +8,14 @@ router.get('/:productNumber', async (req, res, next) => {
         const { productNumber } = req.params;
 
         // productNumber가 number type이 아닐 경우
-        if (!Number.isInteger(productNumber)) {
+        if (!Number.isInteger(Number(productNumber))) {
             const err = new Error('요청하신 페이지를 찾을 수 없습니다.');
             err.statusCode = 404;
             return next(err);
         }
 
         // productNumber와 일치하는 상품이 없는 경우
-        const foundData = await Product.findOne({ number: productNumber }).lean();
+        const foundData = await Product.findOne({ number:Number(productNumber) }).lean();
 
         if (foundData === null) {
             const err = new Error('요청하신 페이지를 찾을 수 없습니다.');
