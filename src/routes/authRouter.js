@@ -4,13 +4,23 @@ const { User } = require('../data');
 const bcrypt = require('bcrypt');
 const jwt = require('jsonwebtoken');
 const { isAuthenticatedMiddleware } = require('../middlewares');
-// 회원가입 api 로직, 중복체크 여부는 어떻게 확인할건가?
+
+// 회원가입 api
 router.post('/sign-up', async (req, res, next) => {
     try {
-        // 필수 필드들에 대해서 검증하는 코드 필요해보임
-        // ex. 빈 값, 이메일 format, 안전하지 않은 패스워드 등
-        const { name, email, password, confirmPassword, phoneNumber, postNumber, address, detailAddress, agreement } =
-            req.body;
+        const {
+            name,
+            email,
+            password,
+            confirmPassword,
+            phoneNumber,
+            postNumber,
+            address,
+            detailAddress,
+            agreement,
+            isEmailCheck,
+        } = req.body;
+
         // name이 string type이 아니거나 빈 값일 경우 에러 핸들러로 에러 넘김
         if (typeof name !== 'string' || name === '') {
             const err = new Error('이름은 문자열 값이며 빈 값이 아니어야 합니다.');
@@ -23,6 +33,14 @@ router.post('/sign-up', async (req, res, next) => {
             err.statusCode = 400;
             return next(err);
         }
+
+        // email이 '@'를 포함하지 않거나 ".com"으로 끝나지 않는 경우
+        if (!email.includes('@') || email.search('.com$') === -1) {
+            const err = new Error('이메일 형식과 맞지 않습니다.');
+            err.statusCode = 400;
+            return next(err);
+        }
+
         // password가 string type이 아니거나 빈 값일 경우 에러 핸들러로 에러 넘김
         if (typeof password !== 'string' || password === '') {
             const err = new Error('비밀번호는 문자열 값이며 빈 값이 아니어야 합니다.');
@@ -76,6 +94,12 @@ router.post('/sign-up', async (req, res, next) => {
             err.statusCode = 400;
             return next(err);
         }
+        // 이메일 중복 체크했는지 확인하는 코드
+        if (isEmailCheck === false || isEmailCheck === undefined || isEmailCheck === null) {
+            const err = new Error('이메일 중복 확인 바랍니다.');
+            err.statusCode = 400;
+            return next(err);
+        }
 
         const hashPassword = await bcrypt.hash(password, 10); // 전달 받은 비밀번호 해시화
         // 유저 데이터 db에 저장하기
@@ -86,6 +110,7 @@ router.post('/sign-up', async (req, res, next) => {
             phoneNumber,
             address: [postNumber, address, detailAddress],
         });
+
         res.json({
             err: null,
             data: {
@@ -104,8 +129,8 @@ router.post('/sign-up', async (req, res, next) => {
 // 이메일 중복 체크하는 로직
 router.post('/sign-up/check-email', async (req, res, next) => {
     try {
-        // 이메일 검증하는 코드 필요해보임
         const { email } = req.body;
+
         // email이 string type이 아니거나 빈 값일 경우 에러 핸들러로 에러 넘김
         if (typeof email !== 'string' || email === '') {
             const err = new Error('이메일은 string값이거나 빈 값이 아니어야 합니다.');
@@ -114,7 +139,7 @@ router.post('/sign-up/check-email', async (req, res, next) => {
         }
 
         // email이 '@'를 포함하지 않거나 ".com"으로 끝나지 않는다면 에러 헨들러로 에러 넘김
-        if (!email.contains('@') || email.search('.com$') === -1) {
+        if (!email.includes('@') || email.search('.com$') === -1) {
             const err = new Error('이메일 형식과 맞지 않습니다.');
             err.statusCode = 400;
             return next(err);
@@ -130,8 +155,8 @@ router.post('/sign-up/check-email', async (req, res, next) => {
             next(err);
             return; // 매우 중요.  return 해주지 않을 경우 response가 간 다음에도 이후 코드들이 실행됨
         }
-
-        res.json({ err: null, data: email });
+        // isEmailCheck : 이메일 중복체크 여부 확인하기 위한 변수
+        res.json({ err: null, data: { email, isEmailCheck: true } });
     } catch (e) {
         next(e);
     }
@@ -183,14 +208,14 @@ router.post('/sign-in', async (req, res, next) => {
             // 쿠키에 토큰 담아서 보냄
             return res
                 .cookie('adminCookies', jwtToken, { httpOnly: true, secure: true })
-                .json({ err: null, data: '로그인에 성공하셨습니다. 환영합니다.' });
+                .json({ err: null, data: { isAdmin: true, message: '로그인에 성공하셨습니다. 환영합니다.' } });
         } else {
             return res
                 .cookie('userCookies', jwtToken, {
                     httpOnly: true,
                     secure: true,
                 })
-                .json({ err: null, data: '로그인에 성공하셨습니다. 환영합니다.' });
+                .json({ err: null, data: { isAdmin: false, message: '로그인에 성공하셨습니다. 환영합니다.' } });
         }
     } catch (e) {
         next(e);
@@ -215,15 +240,6 @@ router.post('/sign-out', isAuthenticatedMiddleware, async (req, res, next) => {
             res.json({ err: null, data: '성공적으로 로그아웃 되었습니다.' });
             return;
         }
-    } catch (e) {
-        next(e);
-    }
-});
-
-// 로그인 상태확인
-router.post('/check-sign-in', isAuthenticatedMiddleware, async (req, res, next) => {
-    try {
-        res.status(204).json({ err: null, data: '로그인된 상태입니다.' });
     } catch (e) {
         next(e);
     }
