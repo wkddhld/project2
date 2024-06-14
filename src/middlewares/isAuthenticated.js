@@ -20,7 +20,7 @@ const isAuthenticatedMiddleware = (req, res, next) => {
                 return next(err);
             }
             if (err.name === 'JsonWebTokenError') {
-                const err = new Error('유효하지 않은 토큰입니다. 다시 로그인 해주세요.');
+                const err = new Error('유효하지 않거나 손상된 토큰입니다. 다시 로그인 해주세요.');
                 err.statusCode = 401;
                 return next(err);
             }

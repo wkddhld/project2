@@ -49,11 +49,14 @@ router.get('/:productNumber', async (req, res, next) => {
                 return next(err);
             }
             return res.json({
-                name: foundData.name,
-                price: foundData.price,
-                information: foundData.information,
-                origin: foundData.origin,
-                image: foundData.image,
+                err: null,
+                data: {
+                    name: foundData.name,
+                    price: foundData.price,
+                    information: foundData.information,
+                    origin: foundData.origin,
+                    image: foundData.image,
+                },
             });
         }
 
@@ -72,14 +75,19 @@ router.get('/:productNumber', async (req, res, next) => {
                 return next(err);
             }
             return res.json({
-                name: foundData.name,
-                price: foundData.price,
-                information: foundData.information,
-                origin: foundData.origin,
-                image: foundData.image,
+                err: null,
+                data: {
+                    name: foundData.name,
+                    price: foundData.price,
+                    information: foundData.information,
+                    origin: foundData.origin,
+                    image: foundData.image,
+                },
             });
         }
     } catch (e) {
         next(e);
     }
 });
+
+module.exports = router;

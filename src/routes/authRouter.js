@@ -87,11 +87,14 @@ router.post('/sign-up', async (req, res, next) => {
             address: [postNumber, address, detailAddress],
         });
         res.json({
-            name: data.name,
-            email: data.email,
-            password: data.password,
-            phoneNumber: data.phoneNumber,
-            address: data.address,
+            err: null,
+            data: {
+                name: data.name,
+                email: data.email,
+                password: data.password,
+                phoneNumber: data.phoneNumber,
+                address: data.address,
+            },
         });
     } catch (e) {
         next(e);
@@ -128,7 +131,7 @@ router.post('/sign-up/check-email', async (req, res, next) => {
             return; // 매우 중요.  return 해주지 않을 경우 response가 간 다음에도 이후 코드들이 실행됨
         }
 
-        res.json(email);
+        res.json({ err: null, data: email });
     } catch (e) {
         next(e);
     }
@@ -180,14 +183,14 @@ router.post('/sign-in', async (req, res, next) => {
             // 쿠키에 토큰 담아서 보냄
             return res
                 .cookie('adminCookies', jwtToken, { httpOnly: true, secure: true })
-                .json('로그인에 성공하셨습니다. 환영합니다.');
+                .json({ err: null, data: '로그인에 성공하셨습니다. 환영합니다.' });
         } else {
             return res
                 .cookie('userCookies', jwtToken, {
                     httpOnly: true,
                     secure: true,
                 })
-                .json('로그인에 성공하셨습니다. 환영합니다.');
+                .json({ err: null, data: '로그인에 성공하셨습니다. 환영합니다.' });
         }
     } catch (e) {
         next(e);
@@ -203,13 +206,13 @@ router.post('/sign-out', isAuthenticatedMiddleware, async (req, res, next) => {
         // userCookies인 경우
         if (userCookies) {
             res.clearCookie('userCookies');
-            res.json('성공적으로 로그아웃 되었습니다.');
+            res.json({ err: null, data: '성공적으로 로그아웃 되었습니다.' });
             return;
         }
         // adminCookies인 경우
         if (adminCookies) {
             res.clearCookie('adminCookies');
-            res.json('성공적으로 로그아웃 되었습니다.');
+            res.json({ err: null, data: '성공적으로 로그아웃 되었습니다.' });
             return;
         }
     } catch (e) {
@@ -220,7 +223,7 @@ router.post('/sign-out', isAuthenticatedMiddleware, async (req, res, next) => {
 // 로그인 상태확인
 router.post('/check-sign-in', isAuthenticatedMiddleware, async (req, res, next) => {
     try {
-        res.status(204).json('로그인된 상태입니다.');
+        res.status(204).json({ err: null, data: '로그인된 상태입니다.' });
     } catch (e) {
         next(e);
     }

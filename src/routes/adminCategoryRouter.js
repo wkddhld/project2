@@ -23,10 +23,12 @@ router.post('/', async (req, res, next) => {
         // 새로운 카테고리 생성
         const newCategory = await Category.create({ categoryNumber: Number(categoryNumber), categoryName });
         // 성공적으로 생성된 경우 응답 반환
-        return res.status(201).json({
-            categoryName: newCategory.categoryName,
-            categoryNumber: Number(newCategory.categoryNumber),
-        });
+        return res
+            .status(201)
+            .json({
+                err: null,
+                data: { categoryName: newCategory.categoryName, categoryNumber: Number(newCategory.categoryNumber) },
+            });
     } catch (e) {
         next(e);
     }
@@ -59,8 +61,8 @@ router.put('/:categoryNumber', async (req, res, next) => {
         }
 
         return res.json({
-            categoryName: category.categoryName,
-            categoryNumber: Number(category.categoryNumber),
+            err: null,
+            data: { categoryName: category.categoryName, categoryNumber: Number(category.categoryNumber) },
         });
     } catch (e) {
         next(e);
@@ -70,7 +72,7 @@ router.put('/:categoryNumber', async (req, res, next) => {
 // 대분류 카테고리 삭제
 router.delete('/:categoryNumber', async (req, res, next) => {
     const { categoryNumber } = req.params; // URL 파라미터에서 categoryNumber 추출
-    
+
     if (!Number.isInteger(Number(categoryNumber))) {
         const err = new Error('categoryNumber field는 number type어야 합니다.');
 
@@ -89,7 +91,7 @@ router.delete('/:categoryNumber', async (req, res, next) => {
             return;
         }
 
-        return res.status(204).json('정상적으로 카테고리가 삭제되었습니다.');
+        return res.status(204).json({ err: null, data: '정상적으로 카테고리가 삭제되었습니다.' });
     } catch (e) {
         next(e);
     }

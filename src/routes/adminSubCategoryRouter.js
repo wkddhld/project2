@@ -1,11 +1,11 @@
 const express = require('express');
 const router = express.Router();
-const {subCategory} = require('../data');
+const { subCategory } = require('../data');
 const { isAuthenticatedAdminMiddleware } = require('../middlewares');
 // 소분류 카테고리 추가
-router.post('/',isAuthenticatedAdminMiddleware, async (req, res, next) => {
+router.post('/', isAuthenticatedAdminMiddleware, async (req, res, next) => {
     const { subCategoryNumber, subCategoryName } = req.body; // 요청 본문에서 subCategoryNumber, subCategoryName 추출
-    
+
     const subCategoryNum = Number(subCategoryNumber);
 
     if (existingSubCategory) {
@@ -28,13 +28,13 @@ router.post('/',isAuthenticatedAdminMiddleware, async (req, res, next) => {
         // 새로운 소분류 카테고리 생성
         const newSubCategory = await subCategory.create({
             number: subCategoryNum,
-            name: subCategoryName
+            name: subCategoryName,
         });
 
         // 성공적으로 생성된 경우 응답 반환
         return res.status(201).json({
-            subCategoryName: newSubCategory.name,
-            subCategoryNumber: newSubCategory.number,
+            err: null,
+            data: { subCategoryName: newSubCategory.name, subCategoryNumber: newSubCategory.number },
         });
     } catch (e) {
         next(e);
@@ -59,7 +59,7 @@ router.put('/:subCategoryNumber', isAuthenticatedAdminMiddleware, async (req, re
             { number: subCategoryNumber },
             {
                 number: newSubCategoryNumber,
-                name: subCategoryName
+                name: subCategoryName,
             },
             { new: true } // 업데이트된 문서를 반환하도록 설정
         );
@@ -73,8 +73,8 @@ router.put('/:subCategoryNumber', isAuthenticatedAdminMiddleware, async (req, re
         }
 
         return res.json({
-            subCategoryName: subCategory.name,
-            subCategoryNumber: subCategory.number,
+            err: null,
+            data: { subCategoryName: subCategory.name, subCategoryNumber: subCategory.number },
         });
     } catch (e) {
         next(e);
@@ -82,7 +82,7 @@ router.put('/:subCategoryNumber', isAuthenticatedAdminMiddleware, async (req, re
 });
 
 // 소분류 카테고리 삭제
-router.delete('/:subCategoryNumber',isAuthenticatedAdminMiddleware, async (req, res, next) => {
+router.delete('/:subCategoryNumber', isAuthenticatedAdminMiddleware, async (req, res, next) => {
     const { subCategoryNumber } = req.params; // URL 파라미터에서 subCategoryNumber 추출
 
     const subCategoryNumberInt = parseInt(subCategoryNumber, 10);
@@ -105,7 +105,7 @@ router.delete('/:subCategoryNumber',isAuthenticatedAdminMiddleware, async (req, 
             return;
         }
 
-        return res.status(204).json({ message: '정상적으로 소분류 카테고리가 삭제되었습니다.' });
+        return res.status(204).json({ err: null, data: '정상적으로 소분류 카테고리가 삭제되었습니다.' });
     } catch (e) {
         next(e);
     }
