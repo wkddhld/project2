@@ -33,28 +33,41 @@ router.get('/', async (req, res, next) => {
 router.get('/:categoryNumber', async (req, res, next) => {
     try {
         const { categoryNumber } = req.params;
+
+        // categoryNumber가 숫자인지 확인
         if (!Number.isInteger(Number(categoryNumber))) {
-            const err = new Error('categoryNumber field는 number type이어야 합니다.');
+            const err = new Error('categoryNumber 필드는 number 타입이어야 합니다.');
             err.statusCode = 400;
             next(err);
             return;
         }
-        const categoryProduct = await Product.find({ categoryNumber: Number(categoryNumber) }).lean();
 
-        if (!categoryProduct) {
+        // categoryNumber에 해당하는 상품 조회
+        const categoryProducts = await Product.find({ categoryNumber: Number(categoryNumber) }).lean();
+
+        // 해당 카테고리의 상품이 없는 경우
+        if (!categoryProducts || categoryProducts.length === 0) {
             const err = new Error('해당 카테고리의 상품을 찾을 수 없습니다.');
             err.statusCode = 404;
             next(err);
-            return; // 매우 중요.  return 해주지 않을 경우 response가 간 다음에도 이후 코드들이 실행됨
+            return;
         }
+
+        // 상품 데이터 반환
         return res.json({
             err: null,
-            data: { image: categoryProduct.image, name: categoryProduct.name, price: categoryProduct.price },
+            data: categoryProducts.map(product => ({
+                name: product.name,
+                price: product.price,
+                image: product.image,
+            }))
         });
     } catch (e) {
         next(e);
     }
 });
+
+
 
 // 소분류 카테고리별 상품 조회
 router.get('/:categoryNum/:subcategoryNum', async (req, res, next) => {
