@@ -35,7 +35,7 @@ router.post('/sign-up', async (req, res, next) => {
         }
 
         // email이 '@'를 포함하지 않거나 ".com"으로 끝나지 않는 경우
-        if (!email.includes('@') || email.search('.com$') === -1) {
+        if (!email.includes('@') || email.search('.(com|net)$') === -1) {
             const err = new Error('이메일 형식과 맞지 않습니다.');
             err.statusCode = 400;
             return next(err);
@@ -52,9 +52,7 @@ router.post('/sign-up', async (req, res, next) => {
         // 에러 핸들러로 에러 넘김
         if (
             password.length < 8 ||
-            password.search(/[a-z]/i) === -1 ||
-            password.search(/[1-9]/i) === -1 ||
-            password.search(/[\{\}\[\]\/?.,;:|\)*~`!^\-_+<>@\#$%&\\\=\(\'\"]/g) === -1
+            password.search(/^(?=.*[A-Za-z])(?=.*\d)(?=.*[@$!%*?&])[A-Za-z\d@$!%*?&]+$/) === -1
         ) {
             const err = new Error('비밀번호 양식이 맞지 않습니다.');
             err.statusCode = 400;
@@ -116,7 +114,6 @@ router.post('/sign-up', async (req, res, next) => {
             data: {
                 name: data.name,
                 email: data.email,
-                password: data.password,
                 phoneNumber: data.phoneNumber,
                 address: data.address,
             },

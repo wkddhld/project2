@@ -1,6 +1,6 @@
 const express = require('express');
 const router = express.Router();
-const { subCategory, Category } = require('../data');
+const { SubCategory, Category } = require('../data');
 
 // 소분류 카테고리 추가
 router.post('/', async (req, res, next) => {
@@ -32,7 +32,7 @@ router.post('/', async (req, res, next) => {
 
     try {
         // 동일한 subCategoryNumber를 가진 소분류 카테고리가 이미 존재하는지 확인
-        const existingSubCategory = await subCategory.findOne({ number: subCategoryNumber }).lean();
+        const existingSubCategory = await SubCategory.findOne({ number: subCategoryNumber }).lean();
         if (existingSubCategory) {
             const err = new Error('이미 존재하는 소분류 카테고리입니다.');
             err.statusCode = 404;
@@ -41,7 +41,7 @@ router.post('/', async (req, res, next) => {
         }
 
         // 새로운 소분류 카테고리 생성
-        const newSubCategory = await subCategory.create({
+        const newSubCategory = await SubCategory.create({
             number: subCategoryNumber,
             name: subCategoryName,
             mainCategoryNumber: categoryNumber,
@@ -66,7 +66,7 @@ router.put('/:subCategoryNumber', async (req, res, next) => {
     const { subCategoryNumber } = req.params; // URL 파라미터에서 subCategoryNumber 추출
     const { newSubCategoryNumber, newCategoryNumber, subCategoryName } = req.body; // 요청 본문에서 새로운 subCategoryNumber, subCategoryName 추출
 
-    const foundSubCategory = await subCategory.findOne({ number: Number(subCategoryNumber) }).lean();
+    const foundSubCategory = await SubCategory.findOne({ number: Number(subCategoryNumber) }).lean();
     // 소분류 카테고리 번호가 3자리가 아니거나 숫자값이 아니거나 소분류 카테고리 db에 존재하지 않는 경우
     if (
         !Number.isInteger(Number(subCategoryNumber)) ||
@@ -103,7 +103,7 @@ router.put('/:subCategoryNumber', async (req, res, next) => {
     }
 
     // 수정하려는 소분류 카테고리 번호가 db에 존재하는지 체크하는 코드
-    const existingSubCategory = await subCategory.findOne({ number: newSubCategoryNumber }).lean();
+    const existingSubCategory = await SubCategory.findOne({ number: newSubCategoryNumber }).lean();
     if (existingSubCategory !== null) {
         const err = new Error('이미 존재하는 소분류 카테고리 번호입니다.');
         err.statusCode = 400;
@@ -111,7 +111,7 @@ router.put('/:subCategoryNumber', async (req, res, next) => {
     }
 
     try {
-        await subCategory.updateOne(
+        await SubCategory.updateOne(
             { number: Number(subCategoryNumber) },
             {
                 number: newSubCategoryNumber,
@@ -138,7 +138,7 @@ router.put('/:subCategoryNumber', async (req, res, next) => {
 router.delete('/:subCategoryNumber', async (req, res, next) => {
     const { subCategoryNumber } = req.params; // URL 파라미터에서 subCategoryNumber 추출
 
-    const foundSubCategory = await subCategory.findOne({ number: Number(subCategoryNumber) }).lean();
+    const foundSubCategory = await SubCategory.findOne({ number: Number(subCategoryNumber) }).lean();
     if (
         !Number.isInteger(Number(subCategoryNumber)) ||
         subCategoryNumber.length !== 3 ||
@@ -153,7 +153,7 @@ router.delete('/:subCategoryNumber', async (req, res, next) => {
 
     try {
         // subCategoryNumber에 해당하는 소분류 카테고리를 찾고 삭제
-        await subCategory.findOneAndDelete({ number: Number(subCategoryNumber) });
+        await SubCategory.findOneAndDelete({ number: Number(subCategoryNumber) });
 
         return res.status(204).json();
     } catch (e) {
