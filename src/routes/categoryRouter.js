@@ -34,10 +34,16 @@ router.get('/:categoryNumber', async (req, res, next) => {
     try {
         const { categoryNumber } = req.params;
 
-        // categoryNumber가 숫자인지 확인
-        if (!Number.isInteger(Number(categoryNumber)) || categoryNumber.length > 2) {
-            const err = new Error('대분류 카테고리는 숫자값이면서 2자리 이하여야 합니다.');
-            err.statusCode = 400;
+        const foundCategory = await Category.findOne({ number: Number(categoryNumber) }).lean();
+        // categoryNumber가 2자리 초과이거나 숫자값이 아니거나 카테고리 db에 존재하지 않는 경우
+        if (
+            !Number.isInteger(Number(categoryNumber)) ||
+            categoryNumber.length > 2 ||
+            foundCategory === null ||
+            foundCategory === undefined
+        ) {
+            const err = new Error('존재하지 않는 대분류 카테고리입니다.');
+            err.statusCode = 404;
             next(err);
             return;
         }
@@ -47,7 +53,7 @@ router.get('/:categoryNumber', async (req, res, next) => {
 
         // 해당 카테고리의 상품이 없는 경우
         if (!categoryProducts || categoryProducts.length === 0) {
-            const err = new Error('해당 카테고리의 상품을 찾을 수 없습니다.');
+            const err = new Error('해당 대분류 카테고리의 상품을 찾을 수 없습니다.');
             err.statusCode = 404;
             next(err);
             return;
@@ -71,49 +77,83 @@ router.get('/:categoryNumber', async (req, res, next) => {
 router.get('/:categoryNumber/:subCategoryNumber', async (req, res, next) => {
     const { categoryNumber, subCategoryNumber } = req.params;
 
-    if (!Number.isInteger(Number(categoryNumber)) || categoryNumber.length > 2) {
-        const err = new Error('대분류 카테고리는 숫자값이면서 2자리 이하여야 합니다.');
-        err.statusCode = 400;
+    const foundCategory = await Category.findOne({ number: Number(categoryNumber) }).lean();
+    // categoryNumber가 2자리 초과이거나 숫자값이 아니거나 카테고리 db에 존재하지 않는 경우
+    if (
+        !Number.isInteger(Number(categoryNumber)) ||
+        categoryNumber.length > 2 ||
+        foundCategory === null ||
+        foundCategory === undefined
+    ) {
+        const err = new Error('존재하지 않는 대분류 카테고리입니다.');
+        err.statusCode = 404;
         next(err);
         return;
     }
 
-    if (!Number.isInteger(Number(subCategoryNumber)) || subCategoryNumber.length !== 3) {
-        const err = new Error('소분류 카테고리는 숫자값이면서 3자리여야 합니다.');
-        err.statusCode = 400;
+    const foundSubCategory = await subCategory.findOne({ number: Number(subCategoryNumber) }).lean();
+    // 소분류 카테고리가 3자리가 아니거나 숫자값이 아니거나 소분류 카테고리 DB에 존재하지 않는 경우
+    if (
+        !Number.isInteger(Number(subCategoryNumber)) ||
+        subCategoryNumber.length !== 3 ||
+        foundSubCategory === null ||
+        foundSubCategory === undefined
+    ) {
+        const err = new Error('존재하지 않는 소분류 카테고리입니다.');
+        err.statusCode = 404;
         next(err);
         return;
     }
 
     try {
-        // categoryNumber과 subCategoryNumber에 해당하는 소분류 카테고리 조회
-        const subCate = await subCategory
-            .findOne({
-                mainCategoryNumber: Number(categoryNumber),
-                number: Number(subCategoryNumber),
-            })
-            .lean();
-
-        if (!subCate) {
-            const err = new Error('해당 소분류 카테고리를 찾을 수 없습니다.');
+        // 조회하려는 subCategory가 categoryNumber에 속해있는지 확인
+        // 소분류 카테고리가 대분류 카테고리에 포함되지 않는 경우
+        if (foundSubCategory.mainCategoryNumber !== foundCategory.number) {
+            const err = new Error('페이지를 찾을 수 없습니다.');
             err.statusCode = 404;
             return next(err);
         }
 
-        const products = await Product.find({
-            categoryNumber: Number(categoryNumber),
-            subCateogryNumber: Number(subCategoryNumber),
-        }).lean();
+        const products = await Product.find({ subCategoryNumber: foundSubCategory.number }).lean();
+
+        // categoryNumber과 subCategoryNumber에 해당하는 소분류 카테고리 조회
+        // const subCate = await subCategory
+        //     .findOne({
+        //         mainCategoryNumber: Number(categoryNumber),
+        //         number: Number(subCategoryNumber),
+        //     })
+        //     .lean();
+
+        // if (!subCate) {
+        //     const err = new Error('해당 소분류 카테고리를 찾을 수 없습니다.');
+        //     err.statusCode = 404;
+        //     return next(err);
+        // }
+
+        // const products = await Product.find({
+        //     categoryNumber: Number(categoryNumber),
+        //     subCateogryNumber: Number(subCategoryNumber),
+        // }).lean();
+
+        // return res.json({
+        //     err: null,
+        //     data: {
+        //         subCategoryName: subCate.name,
+        //         products: products.map((prod) => ({
+        //             image: prod.image,
+        //             name: prod.name,
+        //             price: prod.price,
+        //         })),
+        //     },
+        // });
 
         return res.json({
             err: null,
             data: {
-                subCategoryName: subCate.name,
-                products: products.map((prod) => ({
-                    image: prod.image,
-                    name: prod.name,
-                    price: prod.price,
-                })),
+                subCategoryName: foundSubCategory.name,
+                products: products.map((prod) => {
+                    return { image: prod.image, name: prod.name, price: prod.price };
+                }),
             },
         });
     } catch (e) {
