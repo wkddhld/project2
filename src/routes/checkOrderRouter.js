@@ -1,33 +1,66 @@
 const express = require('express');
 const router = express.Router();
 const { Order, Guest } = require('../data');
-const { isLogined } = require('../middlewares');
 const { customAlphabet } = require('nanoid');
-// import { customAlphabet } f1rom 'nanoid';
 const jwt = require('jsonwebtoken');
 const bcrypt = require('bcrypt');
 
+// 주문번호 만들기
 const numbers = '0123456789';
 const nanoid = customAlphabet(numbers, 10); // 0-9 랜덤으로 10자리 숫자 만들어주는 코드
-
 function generateNumericOrderNumber() {
     return nanoid();
 }
 
+// 토큰확인 함수
+const verifyToken = (token, secretKey) => {
+    try {
+        return jwt.verify(token, secretKey);
+    } catch (err) {
+        if (err.name === 'TokenExpiredError') {
+            const error = new Error('토큰이 만료되었습니다. 다시 로그인 해주세요.');
+            error.statusCode = 401;
+            throw error;
+        }
+        if (err.name === 'JsonWebTokenError') {
+            const error = new Error('유효하지 않거나 손상된 토큰입니다. 다시 로그인 해주세요.');
+            error.statusCode = 401;
+            throw error;
+        }
+        throw err; // 다른 예기치 않은 에러
+    }
+};
+
 //주문조회
 router.get('/', async (req, res, next) => {
     try {
-        // 주문번호 받아오기
-        const orderNumer = req.query.orderNumer;
+        // 쿠키 확인
+        const { userCookies, guestCookies } = req.cookies;
 
-        // 주문번호 검색z
-        const order = await Order.findOne({ number: Number(orderNumer) });
-        // 주문번호가 없을시
-        if (!order) {
-            const err = 404;
-            next(err);
-            return;
+        if (!userCookies && !guestCookies) {
+            const error = new Error('쿠키가 없습니다.');
+            error.statusCode = 401;
+            return next(error);
         }
+
+        // 사용할 변수 선언
+        let decoded;
+        if (userCookies) {
+            decoded = verifyToken(userCookies, process.env.USER_JWT_SECRET_KEY);
+        } else {
+            decoded = verifyToken(guestCookies, process.env.GUEST_JWT_SECRET_KEY);
+        }
+
+        // 주문번호 검색(이메일 검색)
+        const order = await Order.find({ email: decoded.email });
+
+        // 주문번호가 없을시
+        if (order.length === 0) {
+            const error = new Error('주문을 찾을 수 없습니다.');
+            error.statusCode = 404;
+            return next(error);
+        }
+
         // 주문정보 전송
         res.json({ err: null, data: order });
     } catch (e) {
@@ -190,20 +223,13 @@ router.post('/', async (req, res, next) => {
             err.statusCode = 400;
             return next(err);
         }
-
         // 이메일이  string type이 아니거나 빈 값일 경우
         if (typeof email !== 'string' || email === '') {
             const err = new Error('이메일은 문자열 값이며 빈 값이 아니어야 합니다.');
             err.statusCode = 400;
             return next(err);
         }
-
-        // email이 '@'를 포함하지 않거나 ".com"으로 끝나지 않는 경우
-        if (!email.contains('@') || email.search('.com$') === -1) {
-            const err = new Error('이메일 형식과 맞지 않습니다.');
-            err.statusCode = 400;
-            return next(err);
-        }
+        
         // 전화번호가  string type이 아니거나 빈 값이거나 길이가 11자리가 아닌 경우
         if (typeof phoneNumber !== 'string' || phoneNumber === '' || phoneNumber.length !== 11) {
             const err = new Error('이메일은 문자열 값이며 빈 값이 아니어야 하고 11자리이어야 합니다.');
@@ -254,14 +280,14 @@ router.post('/', async (req, res, next) => {
             });
             // 비회원 주문 정보
             const guestOrderData = {
-                number: generateNumericOrderNumber(),
+                number: Number(generateNumericOrderNumber()),
                 name: name,
                 date: new Date(),
-                address: [postAddress, address, detailAddress],
+                address:[postAddress, address, detailAddress],
                 email: email,
                 phoneNumber: phoneNumber,
                 products: products,
-                orderState: true,
+                orderState: true
             };
             // 비회원 주문 정보를 주문 DB에 저장
             const newGuestOrder = new Order(guestOrderData);
@@ -275,19 +301,24 @@ router.post('/', async (req, res, next) => {
             res.status(204).json({ err: null, data: '주문 완료되었습니다.' });
             return;
         }
+
         // data를 db에 저장
         const userData = {
+            number: Number(generateNumericOrderNumber()),
             name: name,
+            date: new Date(),
+            address:[postAddress, address, detailAddress],
             email: email,
             phoneNumber: phoneNumber,
             products: products,
-            date: new Date(),
-            ordernumber: generateNumericOrderNumber(),
-            orderState: true,
+            orderState: "주문완료"
         };
+    
         const userOrder = new Order(userData);
+        console.log(userOrder);
         await userOrder.save();
-        res.status(204).json({ err: null, data: '주문 완료되었습니다.' });
+        
+        res.status(204).json({err: null});
     } catch (e) {
         next(e);
     }

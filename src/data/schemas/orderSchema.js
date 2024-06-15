@@ -1,3 +1,4 @@
+const { json } = require('body-parser');
 const { Schema } = require('mongoose');
 //주문정보 스키마
 const orderSchema = new Schema(
@@ -7,7 +8,7 @@ const orderSchema = new Schema(
             required: true,
         },
         name: {
-            type: Number,
+            type: String,
             required: true,
         },
         date: {
@@ -26,13 +27,24 @@ const orderSchema = new Schema(
             type: String,
             required: true,
         },
-        products: {
-            type: [{ String, Number, Number }], // [{상품명, 상품갯수, 상품가격}]
-            required: true,
-        },
+        // [{상품명, 상품갯수, 상품가격}]
+        products: [{
+            name: {
+                type: String,
+                required: true,
+            },
+            quantity: {
+                type: Number,
+                required: true,
+            },
+            price: {
+                type: Number,
+                required: true,
+            }
+        }],
 
         orderState: {
-            type: Boolean,
+            type: String,
             required: true,
         },
     },
