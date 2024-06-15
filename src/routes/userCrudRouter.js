@@ -16,11 +16,7 @@ router.get('/', async (req, res, next) => {
             return next(err);
         }
 
-        // user 쿠키 decode하여 얻은 payload
-        const token = jwt.decode(userCookies, process.env.USER_JWT_SECRET_KEY);
-        // decode해서 얻은 payload에서 _id로 해당 유저 찾음
-        const user = await User.findById(token._id).lean();
-
+        const user = await User.findById(res.locals.user._id).lean();
         // 유저가 존재하지 않을경우
         if (!user) {
             const err = new Error('해당 유저를 찾을 수 없습니다.');
@@ -51,11 +47,7 @@ router.put('/', async (req, res, next) => {
             return next(err);
         }
 
-        // user 쿠키 decode하여 얻은 payload
-        const token = jwt.decode(userCookies, process.env.USER_JWT_SECRET_KEY);
-
-        // decode해서 얻은 payload에서 _id로 해당 유저 찾음
-        const user = await User.findById(token._id).lean();
+        const user = await User.findById(res.locals.user._id).lean();
 
         // 유저가 존재하지 않을경우
         if (!user) {
@@ -118,7 +110,7 @@ router.put('/', async (req, res, next) => {
 
         // 요청에서 수정 할 데이터 선언
         const data = {
-            _id: token._id,
+            _id: res.locals.user._id,
             name: name,
             email: email,
             password: hashPassword,
@@ -127,7 +119,7 @@ router.put('/', async (req, res, next) => {
         };
 
         // DB에 데이터 저장
-        const result = await User.updateOne({ _id: token._id }, data);
+        const result = await User.updateOne({ _id: res.locals.user._id }, data);
         // update가 제대로 이루어졌는지 확인하는 코드
         if (result.modifiedCount === 0) {
             const err = new Error('존재하지 않는 회원입니다.');
@@ -160,7 +152,7 @@ router.put('/cancel', async (req, res, next) => {
         }
 
         // decode해서 얻은 payload에서 _id로 해당 유저 찾음
-        const user = await User.findById(token._id).lean();
+        const user = await User.findById(res.locals.user._id).lean();
 
         if (!user) {
             const err = new Error('유저를 찾을 수 없습니다.');
