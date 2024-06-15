@@ -52,27 +52,27 @@ router.post('/', upload.single('file'), async (req, res, next) => {
         }
 
         // 상품 가격이 number type이 아니거나 음수일 경우 에러 핸들러로 에러 보냄
-        if (!Number.isInteger(Number(price)) || Number(price) < 0) {
+        if (!Number.isInteger(price) || price < 0) {
             const err = new Error('상품 가격은 숫자값이어야 하고 양수여야 합니다.');
             err.statusCode = 400;
             return next(err);
         }
 
         // 상품 재고가 number type이 아니거나 음수일 경우 에러 핸들러로 에러 보냄
-        if (!Number.isInteger(Number(stock)) || Number(stock) < 0) {
+        if (!Number.isInteger(stock) || stock < 0) {
             const err = new Error('상품 재고는 숫자값이어야 하고 양수여야 합니다.');
             err.statusCode = 400;
             return next(err);
         }
 
         // 대분류 카테고리가 number type이 아닐 경우 에러 핸들러로 에러 보냄
-        if (!Number.isInteger(Number(categoryNumber))) {
+        if (!Number.isInteger(categoryNumber)) {
             const err = new Error('대분류 카테고리는 숫자값이어야 합니다.');
             err.statusCode = 400;
             return next(err);
         }
         // 소분류 카테고리가 number type이 아닐 경우 에러 핸들러로 에러 보냄
-        if (!Number.isInteger(Number(subCategoryNumber))) {
+        if (!Number.isInteger(subCategoryNumber)) {
             const err = new Error('소분류 카테고리는 숫자값이어야 합니다.');
             err.statusCode = 400;
             return next(err);
@@ -92,13 +92,13 @@ router.post('/', upload.single('file'), async (req, res, next) => {
         const data = await Product.create({
             number: Number(number),
             name,
-            price: Number(price),
-            stock: Number(stock),
+            price,
+            stock,
             information,
             origin,
             image: uploadImage.path,
-            categoryNumber: Number(categoryNumber),
-            subCategoryNumber: Number(subCategoryNumber),
+            categoryNumber,
+            subCategoryNumber,
         });
 
         res.status(201).json({
@@ -156,27 +156,27 @@ router.put('/:productNumber', upload.single('file'), async (req, res, next) => {
             return next(err);
         }
         // 상품 가격이 number type이 아니거나 음수일 경우 에러 핸들러로 에러 보냄
-        if (!Number.isInteger(Number(price)) || Number(price) < 0) {
+        if (!Number.isInteger(price) || price < 0) {
             const err = new Error('상품 가격은 숫자값이어야 하고 양수여야 합니다.');
             err.statusCode = 400;
             return next(err);
         }
 
         // 상품 재고가 number type이 아니거나 음수일 경우 에러 핸들러로 에러 보냄
-        if (!Number.isInteger(Number(stock)) || Number(stock) < 0) {
+        if (!Number.isInteger(stock) || stock < 0) {
             const err = new Error('상품 재고는 숫자값이어야 하고 양수여야 합니다.');
             err.statusCode = 400;
             return next(err);
         }
 
         // 대분류 카테고리가 number type이 아닐 경우 에러 핸들러로 에러 보냄
-        if (!Number.isInteger(Number(categoryNumber))) {
+        if (!Number.isInteger(categoryNumber)) {
             const err = new Error('대분류 카테고리는 숫자값이어야 합니다.');
             err.statusCode = 400;
             return next(err);
         }
         // 소분류 카테고리가 number type이 아닐 경우 에러 핸들러로 에러 보냄
-        if (!Number.isInteger(Number(subCategoryNumber))) {
+        if (!Number.isInteger(subCategoryNumber)) {
             const err = new Error('소분류 카테고리는 숫자값이어야 합니다.');
             err.statusCode = 400;
             return next(err);
@@ -201,12 +201,12 @@ router.put('/:productNumber', upload.single('file'), async (req, res, next) => {
             {
                 number: Number(newProductNumber),
                 name,
-                price: Number(price),
-                stock: Number(stock),
+                price,
+                stock,
                 information,
                 image: req.file.path,
-                categoryNumber: Number(categoryNumber),
-                subCategoryNumber: Number(subCategoryNumber),
+                categoryNumber,
+                subCategoryNumber,
             }
         );
         res.status(201).json({ err: null, data: data });
