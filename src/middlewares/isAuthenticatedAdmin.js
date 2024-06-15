@@ -18,7 +18,7 @@ const isAuthenticatedAdminMiddleware = (req, res, next) => {
                     return next(err);
                 }
             }
-
+            res.locals.user = decoded;
             next();
         });
     } else {
