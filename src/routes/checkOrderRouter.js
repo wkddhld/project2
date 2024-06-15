@@ -197,29 +197,33 @@ router.post('/', async (req, res, next) => {
         }
 
         // email이 '@'를 포함하지 않거나 ".com"으로 끝나지 않는 경우
-        if (!email.contains('@') || email.search('.com$') === -1) {
+        if (!email.includes('@') || email.search('.com$') === -1) {
             const err = new Error('이메일 형식과 맞지 않습니다.');
             err.statusCode = 400;
             return next(err);
         }
+
         // 전화번호가  string type이 아니거나 빈 값이거나 길이가 11자리가 아닌 경우
         if (typeof phoneNumber !== 'string' || phoneNumber === '' || phoneNumber.length !== 11) {
             const err = new Error('이메일은 문자열 값이며 빈 값이 아니어야 하고 11자리이어야 합니다.');
             err.statusCode = 400;
             return next(err);
         }
+
         // 우편번호 string type이 아니거나 빈 값인 경우
         if (typeof postAddress !== 'string' || postAddress === '') {
             const err = new Error('우편번호는 문자열 값이며 빈 값이 아니어야 합니다.');
             err.statusCode = 400;
             return next(err);
         }
+
         // 도로명 주소가 string type이 아니거나 빈 값인 경우
         if (typeof address !== 'string' || address === '') {
             const err = new Error('도로명 주소는 문자열 값이며 빈 값이 아니어야 합니다.');
             err.statusCode = 400;
             return next(err);
         }
+
         // 상세 주소가  string type이 아니거나 빈 값인 경우
         if (typeof detailAddress !== 'string' || detailAddress === '') {
             const err = new Error('상세 주소는 문자열 값이며 빈 값이 아니어야 합니다.');
@@ -230,7 +234,7 @@ router.post('/', async (req, res, next) => {
         // 쿠키가 없으면 비회원
         if (!req.cookies) {
             // 비밀번호가 숫자값이 아니거나 4자리가 아닌 경우
-            if (!Number.isInteger(Number(password)) || password.length === 4) {
+            if (!Number.isInteger(password) || password.length === 4) {
                 const err = new Error('비밀번호는 네 자리 숫자값이어야 합니다.');
                 err.statusCode = 400;
                 return next(err);
@@ -252,9 +256,8 @@ router.post('/', async (req, res, next) => {
             });
             // 비회원 주문 정보
             const guestOrderData = {
-                number: generateNumericOrderNumber(),
+                number: Number(generateNumericOrderNumber()),
                 name: name,
-                date: new Date(),
                 address: [postAddress, address, detailAddress],
                 email: email,
                 phoneNumber: phoneNumber,
@@ -273,18 +276,20 @@ router.post('/', async (req, res, next) => {
             res.status(204).json({ err: null, data: '주문 완료되었습니다.' });
             return;
         }
+
         // data를 db에 저장
         const userData = {
-            name: name,
-            email: email,
-            phoneNumber: phoneNumber,
-            products: products,
-            date: new Date(),
-            ordernumber: generateNumericOrderNumber(),
-            orderState: true,
+            products,
+            number: Number(generateNumericOrderNumber()),
+            name,
+            address: [postAddress, address, detailAddress],
+            email,
+            phoneNumber,
+            orderState: '주문완료',
         };
-        const userOrder = new Order(userData);
+
         await userOrder.save();
+
         res.status(204).json({ err: null, data: '주문 완료되었습니다.' });
     } catch (e) {
         next(e);
