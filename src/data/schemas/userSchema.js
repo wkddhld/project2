@@ -27,9 +27,10 @@ const userSchema = new Schema(
             required: false,
             default: false,
         },
-        orderNum: {
-            type: Number,
-            required: false,
+        isUser: {
+            type: Boolean,
+            required: true,
+            default: true,
         },
     },
     {

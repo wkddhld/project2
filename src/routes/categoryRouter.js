@@ -1,32 +1,29 @@
 const express = require('express');
 const router = express.Router();
-const { subCategory, Category, Product } = require('../data');
+const { Product, SubCategory, Category } = require('../data');
 
-// 대분류 카테고리별 상품 조회
-router.get('/:categoryNumber', async (req, res, next) => {
-    const { categoryNumber } = req.params;
-    if (!Number.isInteger(categoryNumber)) {
-        const err = new Error('categoryNumber field는 number type입니다.');
-        err.statusCode = 400;
-        next(err);
-        return;
-    }
-
+// 모든 대분류와 소분류 카테고리 데이터 조회
+router.get('/', async (req, res, next) => {
     try {
-        const categoryProduct = await Product.find({ categoryNumber: Number(categoryNumber) }).lean();
+        // 대분류 카테고리 조회
+        const categories = await Category.find().lean();
 
-        if (!categoryProduct) {
-            const err = new Error('해당 카테고리의 상품을 찾을 수 없습니다.');
-            err.statusCode = 404;
-            next(err);
-            return; // 매우 중요.  return 해주지 않을 경우 response가 간 다음에도 이후 코드들이 실행됨
-        }
+        // 각 대분류 카테고리에 해당하는 소분류 카테고리 조회 및 매핑
+        const categoriesWithSubCategories = await Promise.all(
+            categories.map(async (category) => {
+                const subCategories = await SubCategory.find({ mainCategoryNumber: category.number }).lean();
+                return {
+                    categoryNumber: category.number,
+                    categoryName: category.name,
+                    subCategories: subCategories.map((subCategory) => ({
+                        subCategoryName: subCategory.name,
+                        subCategoryNumber: subCategory.number,
+                    })),
+                };
+            })
+        );
 
-        return res.json({
-            image: categoryProduct.image,
-            name: categoryProduct.name,
-            price: categoryProduct.price,
-        });
+        res.json({ err: null, data: categoriesWithSubCategories });
     } catch (e) {
         next(e);
     }

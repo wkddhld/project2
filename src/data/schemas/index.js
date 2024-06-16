@@ -5,4 +5,11 @@ const categorySchema = require('./categorySchema');
 const orderSchema = require('./orderSchema');
 const subCategorySchema = require('./subCategorySchema');
 
-module.exports = { userSchema, productSchema, guestSchema, categorySchema, orderSchema, subCategorySchema };
+module.exports = {
+    userSchema,
+    productSchema,
+    guestSchema,
+    categorySchema,
+    orderSchema,
+    subCategorySchema,
+};

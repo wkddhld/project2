@@ -1,3 +1,3 @@
-const { User, Guest, Product, Category, subCategory } = require('./models');
+const { User, Guest, Product, Category, SubCategory, Image, Order } = require('./models');
 
-module.exports = { User, Guest, Product, Category, subCategory };
+module.exports = { User, Guest, Product, Category, SubCategory, Image, Order };

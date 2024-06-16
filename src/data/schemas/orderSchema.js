@@ -1,4 +1,5 @@
 const { Schema } = require('mongoose');
+const productSchema = require('./productSchema');
 //주문정보 스키마
 const orderSchema = new Schema(
     {
@@ -6,19 +7,49 @@ const orderSchema = new Schema(
             type: Number,
             required: true,
         },
-        date: {
-            type: Date,
-            required: true,
-        },
-        receiverAddress: {
-            type: [String],
-            required: true,
-        },
-        receiverName: {
+        name: {
             type: String,
             required: true,
         },
-        receiverPhoneNumber: {
+        date: {
+            type: Date,
+            default: Date.now,
+            required: true,
+        },
+        address: {
+            type: [String],
+            required: true,
+        },
+        email: {
+            type: String,
+            required: true,
+        },
+        phoneNumber: {
+            type: String,
+            required: true,
+        },
+        // [{상품명, 상품갯수, 상품가격}]
+        products: {
+            type: [
+                {
+                    productName: {
+                        type: String,
+                        required: true,
+                    },
+                    quantity: {
+                        type: Number,
+                        required: true,
+                    },
+                    price: {
+                        type: Number,
+                        required: true,
+                    },
+                },
+            ],
+            required: true,
+        },
+
+        orderState: {
             type: String,
             required: true,
         },
@@ -27,5 +58,4 @@ const orderSchema = new Schema(
         versionKey: false,
     }
 );
-
 module.exports = orderSchema;
