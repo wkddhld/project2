@@ -36,6 +36,7 @@ router.get('/:categoryNumber', async (req, res, next) => {
         return res.json({
             err: null,
             data: categoryProducts.map((product) => ({
+                number: product.number,
                 name: product.name,
                 price: product.price,
                 image: product.image,
@@ -94,7 +95,7 @@ router.get('/:categoryNumber/:subCategoryNumber', async (req, res, next) => {
             data: {
                 subCategoryName: foundSubCategory.name,
                 products: products.map((prod) => {
-                    return { image: prod.image, name: prod.name, price: prod.price };
+                    return { image: prod.image, name: prod.name, price: prod.price, number: prod.number };
                 }),
             },
         });
