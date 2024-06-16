@@ -12,6 +12,8 @@ const app = express();
 app.use(cors());
 app.use(express.json());
 app.use(express.urlencoded({ extended: false }));
+app.use(cors());
+
 // 쿠키 해석해서 json 객체로 만들어주는 친구, 없으면 우리가 직접 json으로 만들어줘야 함, 원래는 string 값으로 들어옴
 app.use(cookieParser());
 app.use('/api', apiRouter);

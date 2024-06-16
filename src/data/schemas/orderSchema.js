@@ -48,7 +48,6 @@ const orderSchema = new Schema(
             ],
             required: true,
         },
-
         orderState: {
             type: String,
             required: true,

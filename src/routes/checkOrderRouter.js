@@ -5,9 +5,9 @@ const { customAlphabet } = require('nanoid');
 const jwt = require('jsonwebtoken');
 const bcrypt = require('bcrypt');
 
+// 주문번호 만들기
 const numbers = '0123456789';
 const nanoid = customAlphabet(numbers, 10); // 0-9 랜덤으로 10자리 숫자 만들어주는 코드
-
 function generateNumericOrderNumber() {
     return nanoid();
 }
@@ -86,7 +86,6 @@ router.post('/', async (req, res, next) => {
             err.statusCode = 400;
             return next(err);
         }
-
         // 이메일이  string type이 아니거나 빈 값일 경우
         if (typeof email !== 'string' || email === '') {
             const err = new Error('이메일은 문자열 값이며 빈 값이 아니어야 합니다.');
@@ -95,7 +94,7 @@ router.post('/', async (req, res, next) => {
         }
 
         // email이 '@'를 포함하지 않거나 ".com"으로 끝나지 않는 경우
-        if (!email.includes('@') || email.search('.com$') === -1) {
+        if (!email.includes('@') || email.search('.(com|net)$') === -1) {
             const err = new Error('이메일 형식과 맞지 않습니다.');
             err.statusCode = 400;
             return next(err);
@@ -156,7 +155,6 @@ router.post('/', async (req, res, next) => {
                 phoneNumber,
             });
 
-            // const result = await Guest.findOne({ email }).lean();
             // 비회원 주문 정보
             const guestOrderData = {
                 products,
@@ -236,15 +234,34 @@ router.put('/:orderNumber', async (req, res, next) => {
             return next(err);
         }
 
-        const result = await Order.updateOne({ number: Number(orderNumber) }, { orderState: '주문취소' });
+        // orderNumber가 본인의 주문인지 아닌지 확인하는 절차
+        const OrderCheck= await Order.find({email: res.locals.user.email});
+        let result;
+        
+        for (const check of OrderCheck) {
+            if (check.number === orderNumber) {
+                try {
+                    result = await Order.updateOne({ number: Number(orderNumber) }, { orderState: false });
+                    break;  // 주문을 찾았으므로 반복 중단
+                } catch (error) {
+                    const err = new Error('주문 업데이트 중 오류가 발생했습니다.');
+                    err.statusCode = 500;
+                    return next(err);
+                }
+            } else {
+                const err = new Error('사용자의 주문이 아닙니다.');
+                err.statusCode = 404;
+                return next(err);
+            }
+        }
         // update가 제대로 됐는지 확인하는 코드
         if (result.modifiedCount === 0) {
             const err = new Error('주문을 찾을 수 없습니다.');
             err.statusCode = 404;
-            next(err);
-            return;
+            return next(err);
         }
         res.json({ err: null, data: '주문이 취소되었습니다.' });
+
     } catch (e) {
         next(e);
     }
