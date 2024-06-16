@@ -167,16 +167,14 @@ router.post('/sign-in', async (req, res, next) => {
         if (typeof email !== 'string' || email === '') {
             const err = new Error('이메일은 문자열 값이며 빈 값이 될 수 없습니다.');
             err.statusCode = 400;
-            next(err);
-            return;
+            return next(err);
         }
 
         // 비밀번호가 string 값이 아니거나 빈 값일 때
         if (typeof password !== 'string' || password === '') {
             const err = new Error('비밀번호는 문자열 값이며 빈 값이 될 수 없습니다.');
             err.statusCode = 400;
-            next(err);
-            return;
+            return next(err);
         }
 
         // req.body로 받은 email이 DB에 저장된 email과 일치하는 데이터 하나만 찾음
@@ -185,8 +183,7 @@ router.post('/sign-in', async (req, res, next) => {
         if (foundData === null) {
             const err = new Error('이메일이나 비밀번호가 일치하지 않습니다.');
             err.statusCode = 400;
-            next(err);
-            return;
+            return next(err);
         }
 
         // req.body로 받은 password와 DB에 저장된 password와 일치하면 true, 불일치하면 false 반환
@@ -198,8 +195,19 @@ router.post('/sign-in', async (req, res, next) => {
             return;
         }
 
-        // 토큰 생성
-        const jwtToken = jwt.sign(foundData, process.env.USER_JWT_SECRET_KEY, { expiresIn: '30m' });
+        // 탈퇴한 사용자인 경우
+        if (foundData.isUser === false) {
+            const err = new Error('탈퇴한 사용자입니다.');
+            err.statusCode = 400;
+            return next(err);
+        }
+
+        // 토큰 생성(이메일, 전화번호만 담김)
+        const jwtToken = jwt.sign(
+            { _id: foundData._id, email: foundData.email, phoneNumber: foundData.phoneNumber },
+            process.env.USER_JWT_SECRET_KEY,
+            { expiresIn: '30m' }
+        );
         // 관리자 여부에 따라 쿠키 생성
         if (foundData.isAdmin) {
             // 쿠키에 토큰 담아서 보냄
