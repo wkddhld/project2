@@ -180,8 +180,6 @@ router.post('/', async (req, res, next) => {
             const token = jwt.sign(
                 {
                     email,
-                    name,
-                    password: hashPassword,
                     phoneNumber,
                 },
                 process.env.GUEST_JWT_SECRET_KEY,

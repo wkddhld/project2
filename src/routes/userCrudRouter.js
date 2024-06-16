@@ -8,7 +8,7 @@ const bcrypt = require('bcrypt');
 router.get('/', async (req, res, next) => {
     try {
         // 쿠키의 userID
-        const { userCookies, adminCookies } = req.cookies;
+        const { adminCookies } = req.cookies;
         // 관리자인 경우
         if (adminCookies) {
             const err = new Error('접근 권한이 없습니다.');
@@ -16,7 +16,7 @@ router.get('/', async (req, res, next) => {
             return next(err);
         }
 
-        const user = await User.findById(res.locals.user._id).lean();
+        const user = await User.findOne({ _id: res.locals.user._id }).lean();
         // 유저가 존재하지 않을경우
         if (!user) {
             const err = new Error('해당 유저를 찾을 수 없습니다.');
@@ -24,6 +24,7 @@ router.get('/', async (req, res, next) => {
             next(err);
             return;
         }
+
         // 4가지 user정보 반환(이름, 이메일, 주소, 전화번호)
         res.json({
             err: null,
@@ -39,7 +40,7 @@ router.get('/', async (req, res, next) => {
 router.put('/', async (req, res, next) => {
     try {
         // 쿠키의 userID
-        const { userCookies, adminCookies } = req.cookies;
+        const { adminCookies } = req.cookies;
         // 관리자인 경우
         if (adminCookies) {
             const err = new Error('접근 권한이 없습니다.');
@@ -69,9 +70,7 @@ router.put('/', async (req, res, next) => {
         // 에러 핸들러로 에러 넘김
         if (
             password.length < 8 ||
-            password.search(/[a-z]/i) === -1 ||
-            password.search(/[1-9]/i) === -1 ||
-            password.search(/[\{\}\[\]\/?.,;:|\)*~`!^\-_+<>@\#$%&\\\=\(\'\"]/g) === -1
+            password.search(/^(?=.*[A-Za-z])(?=.*\d)(?=.*[@$!%*?&])[A-Za-z\d@$!%*?&]+$/) === -1
         ) {
             const err = new Error('비밀번호 양식이 맞지 않습니다.');
             err.statusCode = 400;
@@ -129,21 +128,28 @@ router.put('/', async (req, res, next) => {
         }
 
         // 수정한 데이터를 바탕으로 토큰 새로 만들어줌
-        const newJsonToken = jwt.sign(data, process.env.USER_JWT_SECRET_KEY, { expiresIn: '30m' });
+        const newJsonToken = jwt.sign(
+            { _id: res.locals.user._id, email: data.email, phoneNumber: data.phoneNumber },
+            process.env.USER_JWT_SECRET_KEY,
+            { expiresIn: '30m' }
+        );
 
         res.status(201)
             .cookie('userCookies', newJsonToken, { httpOnly: true, secure: true })
-            .json({ err: null, data: data });
+            .json({
+                err: null,
+                data: { name: data.name, email: data.email, address: data.address, phoneNumber: data.phoneNumber },
+            });
     } catch (e) {
         next(e);
     }
 });
 
 // 회원 탈퇴
-router.put('/cancel', async (req, res, next) => {
+router.put('/withdrawal', async (req, res, next) => {
     try {
         // 쿠키의 userID
-        const { userCookies, adminCookies } = req.cookies;
+        const { adminCookies } = req.cookies;
         // 관리자인 경우
         if (adminCookies) {
             const err = new Error('접근 권한이 없습니다.');
@@ -162,7 +168,7 @@ router.put('/cancel', async (req, res, next) => {
         }
 
         // user 탈퇴했을 때 상태정보 어떻게 보내줄 건지?
-
+        await User.updateOne({ _id: user._id }, { isUser: false });
         res.json({ err: null, data: '탈퇴되었습니다.' });
     } catch (e) {
         next(e);
