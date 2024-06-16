@@ -68,143 +68,6 @@ router.get('/', async (req, res, next) => {
     }
 });
 
-//주문수정
-router.put('/:orderNumber', async (req, res, next) => {
-    try {
-        const { orderNumber } = req.params;
-        // 프론트엔드가 원하는 정보 넣기
-        const { products, name, phoneNumber, email, postAddress, address, detailAddress } = req.body;
-        //해당 유저가 생성한 주문인지 확인하는 과정
-        const { userCookies, guestCookies } = req.cookies;
-
-        // 주문번호가 number type이 아닌 경우
-        if (!Number.isInteger(Number(orderNumber))) {
-            const err = new Error('해당하는 주문 내역을 찾을 수 없습니다.');
-            err.statusCode = 404;
-            return next(err);
-        }
-
-        if (!userCookies && !guestCookies) {
-            const err = new Error('인증되지 않은 사용자입니다.');
-            err.statusCode = 403;
-            return next(err);
-        }
-
-        let decoded;
-
-        // 회원인 경우
-        if (userCookies) {
-            // JWT 토큰 유효성 판단하는 로직
-            decoded = jwt.verify(token, process.env.USER_JWT_SECRET_KEY, (err, decoded) => {
-                // 토큰이 만료되었을 때
-                if (err.name === 'TokenExpiredError') {
-                    const err = new Error('토큰이 만료되었습니다. 다시 로그인 해주세요.');
-                    err.statusCode = 401;
-                    return next(err);
-                }
-                if (err.name === 'JsonWebTokenError') {
-                    const err = new Error('유효하지 않거나 손상된 토큰입니다. 다시 로그인 해주세요.');
-                    err.statusCode = 401;
-                    return next(err);
-                }
-            });
-        } else {
-            // 비회원인 경우
-            decoded = jwt.verify(token, process.env.GUEST_JWT_SECRET_KEY, (err, decoded) => {
-                if (err.name === 'TokenExpiredError') {
-                    const err = new Error('토큰이 만료되었습니다. 다시 로그인 해주세요.');
-                    err.statusCode = 401;
-                    return next(err);
-                }
-                if (err.name === 'JsonWebTokenError') {
-                    const err = new Error('유효하지 않거나 손상된 토큰입니다. 다시 로그인 해주세요.');
-                    err.statusCode = 401;
-                    return next(err);
-                }
-            });
-        }
-        // 이메일이  string type이 아니거나 빈 값일 경우
-        if (typeof email !== 'string' || email === '') {
-            const err = new Error('이메일은 문자열 값이며 빈 값이 아니어야 합니다.');
-            err.statusCode = 400;
-            return next(err);
-        }
-
-        // email이 '@'를 포함하지 않거나 ".com"으로 끝나지 않는 경우
-        if (!email.contains('@') || email.search('.com$') === -1) {
-            const err = new Error('이메일 형식과 맞지 않습니다.');
-            err.statusCode = 400;
-            return next(err);
-        }
-
-        // 요청받은 이메일과 토큰에 저장된 email 정보 일치/불일치 여부 판단
-        if (email !== decoded.email) {
-            const err = new Error('주문정보가 일치하지 않습니다.');
-            err.statusCode = 403;
-            return next(err);
-        }
-
-        if (!products || !Array.isArray(products) || products.length === 0) {
-            const err = new Error('존재하지 않는 상품입니다.');
-            err.statusCode = 400;
-            return next(err);
-        }
-        // 이름이  string type이 아니거나 빈 값일 경우
-        if (typeof name !== 'string' || name === '') {
-            const err = new Error('이메일은 문자열 값이며 빈 값이 아니어야 합니다.');
-            err.statusCode = 400;
-            return next(err);
-        }
-
-        // 전화번호가  string type이 아니거나 빈 값이거나 길이가 11자리가 아닌 경우
-        if (typeof phoneNumber !== 'string' || phoneNumber === '' || phoneNumber.length !== 11) {
-            const err = new Error('이메일은 문자열 값이며 빈 값이 아니어야 하고 11자리이어야 합니다.');
-            err.statusCode = 400;
-            return next(err);
-        }
-        // 우편번호 string type이 아니거나 빈 값인 경우
-        if (typeof postAddress !== 'string' || postAddress === '') {
-            const err = new Error('우편번호는 문자열 값이며 빈 값이 아니어야 합니다.');
-            err.statusCode = 400;
-            return next(err);
-        }
-        // 도로명 주소가 string type이 아니거나 빈 값인 경우
-        if (typeof address !== 'string' || address === '') {
-            const err = new Error('도로명 주소는 문자열 값이며 빈 값이 아니어야 합니다.');
-            err.statusCode = 400;
-            return next(err);
-        }
-        // 상세 주소가  string type이 아니거나 빈 값인 경우
-        if (typeof detailAddress !== 'string' || detailAddress === '') {
-            const err = new Error('상세 주소는 문자열 값이며 빈 값이 아니어야 합니다.');
-            err.statusCode = 400;
-            return next(err);
-        }
-
-        const data = {
-            name,
-            date: new Date(),
-            address: [postAddress, address, detailAddress],
-            email,
-            phoneNumber,
-            products,
-            orderState: true,
-        };
-
-        const result = await Order.updateOne({ number: Number(orderNumber) }, data);
-        // update가 제대로 이루어졌는지 확인하는 코드
-        if (result.modifiedCount === 0) {
-            const err = new Error('주문을 찾을 수 없습니다.');
-            err.statusCode = 404;
-            next(err);
-            return;
-        }
-        res.json({ err: null, data: '주문이 정상적으로 수정됐습니다.' });
-    } catch (e) {
-        next(e);
-    }
-});
-
 //주문생성
 router.post('/', async (req, res, next) => {
     try {
@@ -305,12 +168,11 @@ router.post('/', async (req, res, next) => {
         // data를 db에 저장
         const userData = {
             number: Number(generateNumericOrderNumber()),
-            name: name,
-            date: new Date(),
+            name,
             address:[postAddress, address, detailAddress],
-            email: email,
-            phoneNumber: phoneNumber,
-            products: products,
+            email,
+            phoneNumber,
+            products,
             orderState: "주문완료"
         };
     
@@ -337,13 +199,32 @@ router.put('/cancel/:orderNumber', async (req, res, next) => {
             return next(err);
         }
 
-        const result = await Order.updateOne({ number: Number(orderNumber) }, { orderSate: false });
+        // orderNumber가 본인의 주문인지 아닌지 확인하는 절차
+        const OrderCheck= await Order.find({email: res.locals.user.email});
+        let result;
+        
+        for (const check of OrderCheck) {
+            if (check.number === orderNumber) {
+                try {
+                    result = await Order.updateOne({ number: Number(orderNumber) }, { orderState: false });
+                    break;  // 주문을 찾았으므로 반복 중단
+                } catch (error) {
+                    const err = new Error('주문 업데이트 중 오류가 발생했습니다.');
+                    err.statusCode = 500;
+                    return next(err);
+                }
+            } else {
+                const err = new Error('사용자의 주문이 아닙니다.');
+                err.statusCode = 404;
+                return next(err);
+            }
+        }
+
         // update가 제대로 됐는지 확인하는 코드
         if (result.modifiedCount === 0) {
             const err = new Error('주문을 찾을 수 없습니다.');
             err.statusCode = 404;
-            next(err);
-            return;
+            return next(err);
         }
         res.json({ err: null, data: '주문이 취소되었습니다.' });
     } catch (e) {
