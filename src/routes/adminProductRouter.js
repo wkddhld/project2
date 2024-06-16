@@ -1,12 +1,14 @@
 const express = require('express');
 const router = express.Router();
-const { Product, Image } = require('../data');
+const { Product } = require('../data');
 const multer = require('multer');
 const path = require('path');
 const { customAlphabet } = require('nanoid');
+const fs = require('fs');
 
+// 0-9 랜덤으로 4자리 숫자 만들어주는 코드
 const randomNumber = '0123456789';
-const nanoid = customAlphabet(randomNumber, 4); // 0-9 랜덤으로 4자리 숫자 만들어주는 코드
+const nanoid = customAlphabet(randomNumber, 4);
 
 function generateNumericOrderNumber() {
     return nanoid();
@@ -78,15 +80,7 @@ router.post('/', upload.single('file'), async (req, res, next) => {
         // 상품 번호(업로드한 날짜 + 랜덤 4자리 숫자)
         const number = Date.now() + generateNumericOrderNumber();
 
-        const file = req.file; // 이미지
-        // 업로드한 이미지 정보 db에 저장
-        const uploadImage = await Image.create({
-            filename: Number(number),
-            path: file.path,
-            originalName: file.originalname,
-        });
         // 상품 정보 db에 저장
-
         const data = await Product.create({
             number: Number(number),
             name,
@@ -94,9 +88,9 @@ router.post('/', upload.single('file'), async (req, res, next) => {
             stock: Number(stock),
             information,
             origin,
-            image: uploadImage.path,
+            image: req.file.filename,
             categoryNumber: Number(categoryNumber),
-            subCateogryNumber: Number(subCategoryNumber),
+            subCategoryNumber: Number(subCategoryNumber),
         });
 
         res.status(201).json({
@@ -110,17 +104,16 @@ router.post('/', upload.single('file'), async (req, res, next) => {
                 origin: data.origin,
                 image: data.image,
                 categoryNumber: data.categoryNumber,
-                subCateogryNumber: data.subCategoryNumber,
+                subCategoryNumber: data.subCategoryNumber,
             },
         });
     } catch (e) {
-        console.error(e);
         next(e);
     }
 });
 
 // 상품 수정
-router.put('/:productNumber', async (req, res, next) => {
+router.put('/:productNumber', upload.single('file'), async (req, res, next) => {
     try {
         const { productNumber } = req.params;
 
@@ -131,25 +124,23 @@ router.put('/:productNumber', async (req, res, next) => {
             return next(err);
         }
 
+        // 변경하려는 상품의 이미지가 없을 경우
         if (!req.file) {
             const err = new Error('이미지 업로드해주세요.');
             err.statusCode = 400;
             return next(err);
         }
-        const { number, name, price, stock, information, categoryNumber, subCategoryNumber } = req.body;
 
-        const foundProduct = await Product.findOne({ productNumber: Number(productNumber) }).lean();
+        const { name, price, stock, information, categoryNumber, subCategoryNumber } = req.body;
+
+        const foundProduct = await Product.findOne({ number: Number(productNumber) }).lean();
         // productNumber에 해당하는 상품을 찾지 못할 경우 에러 핸들러로 에러 보냄
         if (foundProduct === null) {
-            const err = new Error('요청하는 페이지를 찾을 수 없습니다.');
+            const err = new Error('변경 대상의 상품이 없습니다.');
             err.statusCode = 404;
             return next(err);
         }
-        if (!Number.isInteger(Number(number))) {
-            const err = new Error('상품 번호는 숫자값이어야 합니다.');
-            err.statusCode = 400;
-            return next(err);
-        }
+
         // 상품명이 String type이 아니거나 빈 값일 경우 에러 핸들러로 에러 보냄
         if (typeof name !== 'string' || name === '') {
             const err = new Error('상품명은 문자열 값이며 빈 값이 아니어야 합니다.');
@@ -170,13 +161,6 @@ router.put('/:productNumber', async (req, res, next) => {
             return next(err);
         }
 
-        // 상품 이미지가 buffer 타입이 아니거나 없을 경우 에러 핸들러로 에러 보냄
-        if (typeof image !== 'string') {
-            const err = new Error('상품 이미지는 buffer 타입이어야 하고 존재해야 합니다.');
-            err.statusCode = 400;
-            return next(err);
-        }
-
         // 대분류 카테고리가 number type이 아닐 경우 에러 핸들러로 에러 보냄
         if (!Number.isInteger(Number(categoryNumber))) {
             const err = new Error('대분류 카테고리는 숫자값이어야 합니다.');
@@ -189,20 +173,23 @@ router.put('/:productNumber', async (req, res, next) => {
             err.statusCode = 400;
             return next(err);
         }
-        const imageData = await Image.updateOne(
-            { filename: productNumber },
-            { filename: number, path: req.file.path, originalName: req.file.originalname }
-        );
 
+        // 변경하려는 상품의 이미지 찾아서 지우는 코드
+        fs.unlinkSync(foundProduct.image);
+
+        // 새로운 상품 번호 생성
+        const newProductNumber = Date.now() + generateNumericOrderNumber();
+
+        // 상품 업데이트
         const data = await Product.updateOne(
-            { productNumber: Number(productNumber) },
+            { number: Number(productNumber) },
             {
-                number: Number(number),
+                number: Number(newProductNumber),
                 name,
                 price: Number(price),
                 stock: Number(stock),
                 information,
-                image: imageData.path,
+                image: req.file.filename,
                 categoryNumber: Number(categoryNumber),
                 subCategoryNumber: Number(subCategoryNumber),
             }
@@ -216,19 +203,25 @@ router.put('/:productNumber', async (req, res, next) => {
 // 상품 삭제
 router.delete('/:productNumber', async (req, res, next) => {
     const { productNumber } = req.params;
+    // productNumber가 숫자값이 아닌 경우
     if (!Number.isInteger(Number(productNumber))) {
         const err = new Error('요청하는 페이지를 찾을 수 없습니다.');
         err.statusCode = 404;
         return next(err);
     }
-    const foundData = await Product.findOne({ productNumber: Number(productNumber) }).lean();
+    // productNumber에 해당하는 상품이 없을 경우
+    const foundData = await Product.findOne({ number: Number(productNumber) }).lean();
     if (foundData === null) {
         const err = new Error('요청하는 페이지를 찾을 수 없습니다.');
         err.statusCode = 404;
         return next(err);
     }
 
-    await Product.delete({ productNumber: Number(productNumber) });
+    // 삭제하려는 상품의 이미지 찾아서 지우는 코드
+    fs.unlinkSync(foundData.image);
+
+    // productNumber와 일치하는 이미지와 상품 삭제
+    await Product.deleteOne({ number: Number(productNumber) });
     res.status(204).json({ err: null, data: '해당 상품을 삭제하였습니다.' });
 });
 module.exports = router;
