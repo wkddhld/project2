@@ -21,20 +21,22 @@ const productSchema = new Schema(
         information: {
             type: String,
             required: false,
+            default: '',
         },
         origin: {
             type: String,
             required: false,
+            default: '',
         },
         image: {
-            type: Buffer,
+            type: String,
             required: true,
         },
         categoryNumber: {
             type: Number,
             required: true,
         },
-        subCateogryNumber: {
+        subCategoryNumber: {
             type: Number,
             required: true,
         },

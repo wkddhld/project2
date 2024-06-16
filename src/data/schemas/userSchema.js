@@ -27,8 +27,8 @@ const userSchema = new Schema(
             required: false,
             default: false,
         },
-        orderNum: {
-            type: Number,
+        orderNumber: {
+            type: [Number],
             required: false,
         },
     },

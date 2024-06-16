@@ -3,6 +3,7 @@ const Guest = require('./Guest');
 const Product = require('./Product');
 const Category = require('./Category');
 const Order = require('./Order');
-const SCategory = require('./subCategory');
+const subCategory = require('./subCategory');
+const Image = require('./Image');
 
-module.exports = { User, Guest, Product, Category, SCategory, Order };
+module.exports = { User, Guest, Product, Category, subCategory, Order, Image };
