@@ -1,5 +1,5 @@
-const { json } = require('body-parser');
 const { Schema } = require('mongoose');
+
 //주문정보 스키마
 const orderSchema = new Schema(
     {
@@ -13,6 +13,7 @@ const orderSchema = new Schema(
         },
         date: {
             type: Date,
+            default: Date.now,
             required: true,
         },
         address: {
@@ -28,20 +29,25 @@ const orderSchema = new Schema(
             required: true,
         },
         // [{상품명, 상품갯수, 상품가격}]
-        products: [{
-            name: {
-                type: String,
-                required: true,
-            },
-            quantity: {
-                type: Number,
-                required: true,
-            },
-            price: {
-                type: Number,
-                required: true,
-            }
-        }],
+        products: {
+            type: [
+                {
+                    productName: {
+                        type: String,
+                        required: true,
+                    },
+                    quantity: {
+                        type: Number,
+                        required: true,
+                    },
+                    price: {
+                        type: Number,
+                        required: true,
+                    },
+                },
+            ],
+            required: true,
+        },
 
         orderState: {
             type: String,
