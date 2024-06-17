@@ -1,6 +1,6 @@
 const express = require('express');
 const router = express.Router();
-const { User } = require('../data');
+const { User, Guest, Order } = require('../data');
 const bcrypt = require('bcrypt');
 const jwt = require('jsonwebtoken');
 const { isAuthenticatedMiddleware } = require('../middlewares');
@@ -159,7 +159,7 @@ router.post('/sign-up/check-email', async (req, res, next) => {
     }
 });
 
-// 로그인 api
+// 회원 로그인 api
 router.post('/sign-in', async (req, res, next) => {
     try {
         const { email, password } = req.body;
@@ -222,6 +222,44 @@ router.post('/sign-in', async (req, res, next) => {
                 })
                 .json({ err: null, data: { isAdmin: false, message: '로그인에 성공하셨습니다. 환영합니다.' } });
         }
+    } catch (e) {
+        next(e);
+    }
+});
+
+router.post('/guest/sign-in', async (req, res, next) => {
+    try {
+        const { orderNumber, password } = req.body;
+
+        if (!Number.isInteger(Number(orderNumber)) || orderNumber.length !== 10) {
+            const err = new Error('주문번호는 10자리 숫자값이어야 합니다.');
+            err.statusCode = 400;
+            return next(err);
+        }
+
+        if (!Number.isInteger(Number(password)) || password.length !== 4) {
+            const err = new Error('비밀번호는 4자리 숫자값이어야 합니다.');
+            err.statusCode = 400;
+            return next(err);
+        }
+
+        // 주문 정보 가져옴
+        const foundOrder = await Order.findOne({ number: Number(orderNumber) }).lean();
+        if (foundOrder === null || foundOrder === undefined) {
+            const err = new Error('주문번호나 비밀번호가 일치하지 않습니다.');
+            err.statusCode = 400;
+            return next(err);
+        }
+        // 주문을 한 비회원인지 체크하는 코드
+        const foundGuest = await Guest.findOne({ email: foundOrder.email }).lean();
+        const isPassword = await bcrypt.compare(password.toString(), foundGuest.password);
+        if (!isPassword) {
+            const err = new Error('주문번호나 비밀번호가 일치하지 않습니다.');
+            err.statusCode = 400;
+            return next(err);
+        }
+
+        res.json('주문 조회 성공');
     } catch (e) {
         next(e);
     }
