@@ -1,5 +1,4 @@
 const { Schema } = require('mongoose');
-const productSchema = require('./productSchema');
 //주문정보 스키마
 const orderSchema = new Schema(
     {
@@ -48,6 +47,7 @@ const orderSchema = new Schema(
             ],
             required: true,
         },
+
         orderState: {
             type: String,
             required: true,
