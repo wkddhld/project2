@@ -8,6 +8,7 @@ const adminProductRouter = require('./adminProductRouter');
 const userProductRouter = require('./userProductRouter');
 const checkOrderRouter = require('./checkOrderRouter');
 const userDetailProductRouter = require('./userDetailProductRouter');
+const adminOrderRouter = require('./adminOrderRouter');
 const { isAuthenticatedMiddleware, isAuthenticatedAdminMiddleware } = require('../middlewares');
 
 apiRouter.use('/', authRouter); // 회원가입 및 로그인 라우터 연결
@@ -16,6 +17,7 @@ apiRouter.use('/admin/categories', isAuthenticatedAdminMiddleware, adminCategory
 apiRouter.use('/my-page', isAuthenticatedMiddleware, userCrudRouter); // 회원 정보 조회 & 수정 & 삭제 라우터 연결
 apiRouter.use('/admin/subcategories', isAuthenticatedAdminMiddleware, adminSubCategoryRouter); // 소분류 카테고리 수정 & 삭제 & 추가 라우터 연결
 apiRouter.use('/admin/products', isAuthenticatedAdminMiddleware, adminProductRouter);
+apiRouter.use('/admin/orders', isAuthenticatedAdminMiddleware, adminOrderRouter);
 apiRouter.use('/products', userProductRouter);
 apiRouter.use('/orders', checkOrderRouter);
 apiRouter.use('/product', userDetailProductRouter);
