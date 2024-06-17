@@ -4,6 +4,8 @@ const { Order, Guest } = require('../data');
 const { customAlphabet } = require('nanoid');
 const jwt = require('jsonwebtoken');
 const bcrypt = require('bcrypt');
+const nodemailer = require('nodemailer');
+require('dotenv').config();
 
 // 주문번호 만들기
 const numbers = '0123456789';
@@ -127,7 +129,6 @@ router.post('/', async (req, res, next) => {
             err.statusCode = 400;
             return next(err);
         }
-
         // 쿠키가 없으면 비회원
         if (req.cookies && Object.keys(req.cookies).length === 0) {
             // 비밀번호가 숫자값이 아니거나 4자리가 아닌 경우
@@ -165,11 +166,36 @@ router.post('/', async (req, res, next) => {
                 phoneNumber,
                 orderState: '주문완료',
             };
+    
 
             // 비회원 주문 정보를 주문 DB에 저장
             const newGuestOrder = new Order(guestOrderData);
             await newGuestOrder.save();
+
+        
             // 생성한 주문번호 이메일로 전송하는 로직 추가해야 함
+            let transporter = nodemailer.createTransport({
+                service: 'gmail',
+                auth: {
+                    user: process.env.EMAIL_USER,
+                    pass: process.env.EMAIL_PASS
+                }
+            });
+
+            
+            let mailOptions = {
+                from: process.env.EMAIL_USER,
+                to: email,
+                subject: `${guestOrderData.name}님에게 보내는 주문번호`,
+                text: `회원님의 주문번호는 ${guestOrderData.number}입니다.`
+            };
+
+            transporter.sendMail(mailOptions, (error, info) => {
+                if (error) {
+                    return console.log(error);
+                }
+                console.log('Email sent: ' + info.response);
+            });
 
             // 세션 쿠키 사용하는데, 비회원인 사람이 주문하고 브라우저 닫으면 토큰은 사라지는데
             // 이 경우에는 어떡하죠..?
@@ -186,7 +212,6 @@ router.post('/', async (req, res, next) => {
 
             return res.cookie('guestCookies', token, { httpOnly: true, secure: true }).status(201).json('주문 완료');
         }
-
         // data를 db에 저장
         const userData = {
             products,
