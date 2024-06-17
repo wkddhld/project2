@@ -1,11 +1,12 @@
 const express = require('express');
 const router = express.Router();
-const { Product, SubCategory, Category } = require('../data');
+const { Category } = require('../data');
 
 // 모든 대분류와 소분류 카테고리 데이터 조회
 router.get('/', async (req, res, next) => {
     try {
         const categories = await Category.find().populate('subCategories').lean();
+
         const categoriesWithSubCategories = categories.map((category) => ({
             categoryNumber: category.number,
             categoryName: category.name,
