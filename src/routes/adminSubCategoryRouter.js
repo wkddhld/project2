@@ -1,15 +1,30 @@
 const express = require('express');
 const router = express.Router();
-const { subCategory } = require('../data');
-const { isAuthenticatedAdminMiddleware } = require('../middlewares');
+const { SubCategory, Category } = require('../data');
+
 // 소분류 카테고리 추가
-router.post('/', isAuthenticatedAdminMiddleware, async (req, res, next) => {
-    const { subCategoryNumber, subCategoryName } = req.body; // 요청 본문에서 subCategoryNumber, subCategoryName 추출
+router.post('/', async (req, res, next) => {
+    const { subCategoryNumber, subCategoryName, categoryNumber } = req.body;
 
-    const subCategoryNum = Number(subCategoryNumber);
+    // 대분류 카테고리가 숫자값이 아니거나 2자리 이상인 경우
+    if (!Number.isInteger(categoryNumber) || categoryNumber.toString().length > 2) {
+        const err = new Error('대분류 카테고리는 2자리 이하의 숫자값이어야 합니다.');
+        err.statusCode = 400;
+        next(err);
+        return;
+    }
 
-    if (existingSubCategory) {
-        const err = new Error('이미 존재하는 소분류 카테고리입니다.');
+    // 추가하려는 대분류 카테고리 번호가 db에 존재하는지 체크
+    const existingCategory = await Category.findOne({ number: categoryNumber }).lean();
+    if (existingCategory === null || existingCategory === undefined) {
+        const err = new Error('존재하지 않는 대분류 카테고리입니다.');
+        err.statusCode = 400;
+        return next(err);
+    }
+
+    // 소분류 카테고리가 3자리 숫자값이 아닌 경우
+    if (!Number.isInteger(subCategoryNumber) || subCategoryNumber.toString().length !== 3) {
+        const err = new Error('소분류 카테고리는 3자리 숫자값이어야 합니다.');
         err.statusCode = 400;
         next(err);
         return;
@@ -17,24 +32,29 @@ router.post('/', isAuthenticatedAdminMiddleware, async (req, res, next) => {
 
     try {
         // 동일한 subCategoryNumber를 가진 소분류 카테고리가 이미 존재하는지 확인
-        const existingSubCategory = await subCategory.findOne({ number: subCategoryNum }).lean();
+        const existingSubCategory = await SubCategory.findOne({ number: subCategoryNumber }).lean();
         if (existingSubCategory) {
             const err = new Error('이미 존재하는 소분류 카테고리입니다.');
-            err.statusCode = 400;
+            err.statusCode = 404;
             next(err);
             return;
         }
 
         // 새로운 소분류 카테고리 생성
-        const newSubCategory = await subCategory.create({
-            number: subCategoryNum,
+        const newSubCategory = await SubCategory.create({
+            number: subCategoryNumber,
             name: subCategoryName,
+            mainCategoryNumber: categoryNumber,
         });
 
         // 성공적으로 생성된 경우 응답 반환
         return res.status(201).json({
             err: null,
-            data: { subCategoryName: newSubCategory.name, subCategoryNumber: newSubCategory.number },
+            data: {
+                subCategoryName: newSubCategory.name,
+                subCategoryNumber: newSubCategory.number,
+                mainCategoryNumber: newSubCategory.mainCategoryNumber,
+            },
         });
     } catch (e) {
         next(e);
@@ -42,39 +62,72 @@ router.post('/', isAuthenticatedAdminMiddleware, async (req, res, next) => {
 });
 
 // 소분류 카테고리 수정
-router.put('/:subCategoryNumber', isAuthenticatedAdminMiddleware, async (req, res, next) => {
+router.put('/:subCategoryNumber', async (req, res, next) => {
     const { subCategoryNumber } = req.params; // URL 파라미터에서 subCategoryNumber 추출
-    const { newSubCategoryNumber, subCategoryName } = req.body; // 요청 본문에서 새로운 subCategoryNumber, subCategoryName 추출
+    const { newSubCategoryNumber, newCategoryNumber, subCategoryName } = req.body; // 요청 본문에서 새로운 subCategoryNumber, subCategoryName 추출
 
-    if (!Number.isInteger(newSubCategoryNumber)) {
-        const err = new Error('subCategoryNumber 필드는 number 타입이어야 합니다.');
+    const foundSubCategory = await SubCategory.findOne({ number: Number(subCategoryNumber) }).lean();
+    // 소분류 카테고리 번호가 3자리가 아니거나 숫자값이 아니거나 소분류 카테고리 db에 존재하지 않는 경우
+    if (
+        !Number.isInteger(Number(subCategoryNumber)) ||
+        subCategoryNumber.length !== 3 ||
+        foundSubCategory === null ||
+        foundSubCategory === undefined
+    ) {
+        const err = new Error('존재하지 않는 소분류 카테고리입니다.');
+        err.statusCode = 404;
+        return next(err);
+    }
+    // 수정하려는 대분류 카테고리 번호가 숫자값이 아니거나 2자리 초과일 경우
+    if (!Number.isInteger(newCategoryNumber) || newCategoryNumber.toString().length > 2) {
+        const err = new Error('대분류 카테고리는 2자리 이하의 숫자값이어야 합니다.');
         err.statusCode = 400;
         next(err);
         return;
     }
 
+    // 수정하려는 대분류 카테고리 번호가 db에 존재하는지 체크
+    const existingCategory = await Category.findOne({ number: newCategoryNumber }).lean();
+    if (existingCategory === null || existingCategory === undefined) {
+        const err = new Error('존재하지 않는 대분류 카테고리입니다.');
+        err.statusCode = 400;
+        return next(err);
+    }
+
+    // 수정하려는 소분류 카테고리 번호가 숫자값이 아니거나 3자리가 아닐 경우
+    if (!Number.isInteger(newSubCategoryNumber) || newSubCategoryNumber.toString().length !== 3) {
+        const err = new Error('소분류 카테고리는 3자리 숫자값이어야 합니다.');
+        err.statusCode = 400;
+        next(err);
+        return;
+    }
+
+    // 수정하려는 소분류 카테고리 번호가 db에 존재하는지 체크하는 코드
+    const existingSubCategory = await SubCategory.findOne({ number: newSubCategoryNumber }).lean();
+    if (existingSubCategory !== null) {
+        const err = new Error('이미 존재하는 소분류 카테고리 번호입니다.');
+        err.statusCode = 400;
+        return next(err);
+    }
+
     try {
-        // subCategoryNumber에 해당하는 소분류 카테고리를 찾고 업데이트
-        const subCategory = await subCategory.findOneAndUpdate(
-            { number: subCategoryNumber },
+        await SubCategory.updateOne(
+            { number: Number(subCategoryNumber) },
             {
                 number: newSubCategoryNumber,
                 name: subCategoryName,
+                mainCategoryNumber: newCategoryNumber,
             },
             { new: true } // 업데이트된 문서를 반환하도록 설정
         );
 
-        // 소분류 카테고리를 찾지 못한 경우
-        if (!subCategory) {
-            const err = new Error('해당 소분류 카테고리가 존재하지 않습니다.');
-            err.statusCode = 404;
-            next(err);
-            return;
-        }
-
         return res.json({
             err: null,
-            data: { subCategoryName: subCategory.name, subCategoryNumber: subCategory.number },
+            data: {
+                subCategoryName: subCategoryName,
+                subCategoryNumber: newSubCategoryNumber,
+                mainCategoryNumber: newCategoryNumber,
+            },
         });
     } catch (e) {
         next(e);
@@ -82,30 +135,27 @@ router.put('/:subCategoryNumber', isAuthenticatedAdminMiddleware, async (req, re
 });
 
 // 소분류 카테고리 삭제
-router.delete('/:subCategoryNumber', isAuthenticatedAdminMiddleware, async (req, res, next) => {
+router.delete('/:subCategoryNumber', async (req, res, next) => {
     const { subCategoryNumber } = req.params; // URL 파라미터에서 subCategoryNumber 추출
 
-    const subCategoryNumberInt = parseInt(subCategoryNumber, 10);
-    if (isNaN(subCategoryNumberInt)) {
-        const err = new Error('subCategoryNumber 필드는 number 타입이어야 합니다.');
-        err.statusCode = 400;
+    const foundSubCategory = await SubCategory.findOne({ number: Number(subCategoryNumber) }).lean();
+    if (
+        !Number.isInteger(Number(subCategoryNumber)) ||
+        subCategoryNumber.length !== 3 ||
+        foundSubCategory === null ||
+        foundSubCategory === undefined
+    ) {
+        const err = new Error('존재하지 않는 소분류 카테고리입니다.');
+        err.statusCode = 404;
         next(err);
         return;
     }
 
     try {
         // subCategoryNumber에 해당하는 소분류 카테고리를 찾고 삭제
-        const subCategory = await subCategory.findOneAndDelete({ number: subCategoryNumberInt });
+        await SubCategory.findOneAndDelete({ number: Number(subCategoryNumber) });
 
-        // 소분류 카테고리를 찾지 못한 경우
-        if (!subCategory) {
-            const err = new Error('해당 소분류 카테고리가 존재하지 않습니다.');
-            err.statusCode = 404;
-            next(err);
-            return;
-        }
-
-        return res.status(204).json({ err: null, data: '정상적으로 소분류 카테고리가 삭제되었습니다.' });
+        return res.status(204).json();
     } catch (e) {
         next(e);
     }

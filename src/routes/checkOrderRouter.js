@@ -4,6 +4,8 @@ const { Order, Guest } = require('../data');
 const { customAlphabet } = require('nanoid');
 const jwt = require('jsonwebtoken');
 const bcrypt = require('bcrypt');
+const nodemailer = require('nodemailer');
+require('dotenv').config();
 
 // 주문번호 만들기
 const numbers = '0123456789';
@@ -92,105 +94,163 @@ router.post('/', async (req, res, next) => {
             err.statusCode = 400;
             return next(err);
         }
-        
+
+        // email이 '@'를 포함하지 않거나 ".com"으로 끝나지 않는 경우
+        if (!email.includes('@') || email.search('.(com|net)$') === -1) {
+            const err = new Error('이메일 형식과 맞지 않습니다.');
+            err.statusCode = 400;
+            return next(err);
+        }
+
         // 전화번호가  string type이 아니거나 빈 값이거나 길이가 11자리가 아닌 경우
         if (typeof phoneNumber !== 'string' || phoneNumber === '' || phoneNumber.length !== 11) {
             const err = new Error('이메일은 문자열 값이며 빈 값이 아니어야 하고 11자리이어야 합니다.');
             err.statusCode = 400;
             return next(err);
         }
+
         // 우편번호 string type이 아니거나 빈 값인 경우
         if (typeof postAddress !== 'string' || postAddress === '') {
             const err = new Error('우편번호는 문자열 값이며 빈 값이 아니어야 합니다.');
             err.statusCode = 400;
             return next(err);
         }
+
         // 도로명 주소가 string type이 아니거나 빈 값인 경우
         if (typeof address !== 'string' || address === '') {
             const err = new Error('도로명 주소는 문자열 값이며 빈 값이 아니어야 합니다.');
             err.statusCode = 400;
             return next(err);
         }
+
         // 상세 주소가  string type이 아니거나 빈 값인 경우
         if (typeof detailAddress !== 'string' || detailAddress === '') {
             const err = new Error('상세 주소는 문자열 값이며 빈 값이 아니어야 합니다.');
             err.statusCode = 400;
             return next(err);
         }
-
         // 쿠키가 없으면 비회원
-        if (!req.cookies) {
+        if (req.cookies && Object.keys(req.cookies).length === 0) {
             // 비밀번호가 숫자값이 아니거나 4자리가 아닌 경우
-            if (!Number.isInteger(Number(password)) || password.length === 4) {
+            if (!Number.isInteger(password) || password.toString().length !== 4) {
                 const err = new Error('비밀번호는 네 자리 숫자값이어야 합니다.');
                 err.statusCode = 400;
                 return next(err);
             }
+
             // 비밀번호 일치/불일치 여부 판단
             if (password !== confirmPassword) {
                 const err = new Error('입력하신 비밀번호와 일치하지 않습니다.');
                 err.statusCode = 400;
                 return next(err);
             }
+
             // 비밀번호 해시화
-            const hashPassword = await bcrypt.hash(password, 10);
+            const hashPassword = await bcrypt.hash(password.toString(), 10);
             // guest DB에 데이터 저장
+
             await Guest.create({
                 email,
                 name,
                 password: hashPassword,
                 phoneNumber,
             });
+
             // 비회원 주문 정보
             const guestOrderData = {
+                products,
                 number: Number(generateNumericOrderNumber()),
-                name: name,
-                date: new Date(),
-                address:[postAddress, address, detailAddress],
-                email: email,
-                phoneNumber: phoneNumber,
-                products: products,
-                orderState: true
+                name,
+                address: [postAddress, address, detailAddress],
+                email,
+                phoneNumber,
+                orderState: '주문완료',
             };
+    
+
             // 비회원 주문 정보를 주문 DB에 저장
             const newGuestOrder = new Order(guestOrderData);
-            const result = await newGuestOrder.save();
+            await newGuestOrder.save();
+
+        
             // 생성한 주문번호 이메일로 전송하는 로직 추가해야 함
+            let transporter = nodemailer.createTransport({
+                service: 'gmail',
+                auth: {
+                    user: process.env.EMAIL_USER,
+                    pass: process.env.EMAIL_PASS
+                }
+            });
+
+            
+            let mailOptions = {
+                from: process.env.EMAIL_USER,
+                to: email,
+                subject: `${guestOrderData.name}님에게 보내는 주문번호`,
+                text: `회원님의 주문번호는 ${guestOrderData.number}입니다.`
+            };
+
+            transporter.sendMail(mailOptions, (error, info) => {
+                if (error) {
+                    return console.log(error);
+                }
+                console.log('Email sent: ' + info.response);
+            });
+
             // 세션 쿠키 사용하는데, 비회원인 사람이 주문하고 브라우저 닫으면 토큰은 사라지는데
             // 이 경우에는 어떡하죠..?
             // 비회원 위한 쿠키 및 토큰 생성
-            const token = jwt.sign(result, process.env.GUSET_SECRET_KEY, { expiresIn: '30m' });
-            res.cookie('gusetCookies', token, { httpOnly: true, secure: true });
-            res.status(204).json({ err: null, data: '주문 완료되었습니다.' });
-            return;
-        }
 
+            const token = jwt.sign(
+                {
+                    email,
+                    phoneNumber,
+                },
+                process.env.GUEST_JWT_SECRET_KEY,
+                { expiresIn: '30m' }
+            );
+
+            return res.cookie('guestCookies', token, { httpOnly: true, secure: true }).status(201).json('주문 완료');
+        }
         // data를 db에 저장
         const userData = {
+            products,
             number: Number(generateNumericOrderNumber()),
             name,
-            address:[postAddress, address, detailAddress],
+            address: [postAddress, address, detailAddress],
             email,
             phoneNumber,
-            products,
-            orderState: "주문완료"
+            orderState: '주문완료',
         };
-    
+
         const userOrder = new Order(userData);
-        console.log(userOrder);
         await userOrder.save();
-        
-        res.status(204).json({err: null});
+
+        res.status(201).json({ err: null, data: '주문 완료되었습니다.' });
     } catch (e) {
         next(e);
     }
 });
 
 //주문 취소
-router.put('/cancel/:orderNumber', async (req, res, next) => {
+router.put('/:orderNumber', async (req, res, next) => {
     try {
         // 주문 정보 받아오기
         const { orderNumber } = req.params;
+        const { guestCookies, userCookies } = req.cookies;
+
+        if (!guestCookies && !userCookies) {
+            const err = new Error('접근 권한이 없습니다.');
+            err.statusCode = 403;
+            return next(err);
+        }
+
+        let token;
+        if (guestCookies) {
+            token = verifyToken(guestCookies, process.env.GUEST_JWT_SECRET_KEY);
+        } else {
+            token = verifyToken(userCookies, process.env.USER_JWT_SECRET_KEY);
+        }
 
         // 주문번호가 number type이 아닌 경우
         if (!Number.isInteger(Number(orderNumber))) {
@@ -200,14 +260,30 @@ router.put('/cancel/:orderNumber', async (req, res, next) => {
         }
 
         // orderNumber가 본인의 주문인지 아닌지 확인하는 절차
-        const OrderCheck= await Order.find({email: res.locals.user.email});
+        const OrderCheck = await Order.find({ email: token.email }).lean();
+
         let result;
-        
+
         for (const check of OrderCheck) {
-            if (check.number === orderNumber) {
+            if (check.number === Number(orderNumber)) {
                 try {
-                    result = await Order.updateOne({ number: Number(orderNumber) }, { orderState: false });
-                    break;  // 주문을 찾았으므로 반복 중단
+                    // 이미 취소된 주문인지 체크해주는 코드
+                    const foundOrder = await Order.findOne({ number: Number(orderNumber) }).lean();
+                    if (foundOrder.orderState === '주문취소') {
+                        const err = new Error('이미 취소된 주문입니다.');
+                        err.statusCode = 400;
+                        return next(err);
+                    }
+
+                    if (foundOrder.orderState === '배송완료') {
+                        const err = new Error('배송 완료된 상품이라 주문 취소가 불가합니다.');
+                        err.statusCode = 400;
+                        return next(err);
+                    }
+
+                    result = await Order.updateOne({ number: Number(orderNumber) }, { orderState: '주문취소' });
+
+                    break; // 주문을 찾았으므로 반복 중단
                 } catch (error) {
                     const err = new Error('주문 업데이트 중 오류가 발생했습니다.');
                     err.statusCode = 500;
