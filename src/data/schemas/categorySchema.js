@@ -19,9 +19,8 @@ const categorySchema = new Schema(
 );
 
 categorySchema.virtual('subCategories', {
-    ref: 'SubCategory',
+    ref: 'subcategories',
     localField: 'number',
     foreignField: 'mainCategoryNumber',
 });
-
 module.exports = categorySchema;
