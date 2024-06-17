@@ -13,7 +13,15 @@ const categorySchema = new Schema(
     },
     {
         versionKey: false,
+        toJSON: { virtuals: true },
+        toObject: { virtuals: true },
     }
 );
+
+categorySchema.virtual('subCategories', {
+    ref: 'SubCategory',
+    localField: 'number',
+    foreignField: 'mainCategoryNumber',
+});
 
 module.exports = categorySchema;
