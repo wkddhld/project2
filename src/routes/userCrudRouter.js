@@ -169,6 +169,7 @@ router.put('/withdrawal', async (req, res, next) => {
 
         // user 탈퇴했을 때 상태정보 어떻게 보내줄 건지?
         await User.updateOne({ _id: user._id }, { isUser: false });
+        res.clearCookie('userCookies');
         res.json({ err: null, data: '탈퇴되었습니다.' });
     } catch (e) {
         next(e);
