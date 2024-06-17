@@ -22,7 +22,7 @@ const isAuthenticatedAdminMiddleware = (req, res, next) => {
             next();
         });
     } else {
-        const err = new Error('인증되지 않은 관리자입니다.');
+        const err = new Error('관리자가 아닙니다.');
         err.statusCode = 401;
         next(err);
         return;

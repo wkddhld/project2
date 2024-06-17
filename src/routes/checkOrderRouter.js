@@ -235,14 +235,30 @@ router.put('/:orderNumber', async (req, res, next) => {
         }
 
         // orderNumber가 본인의 주문인지 아닌지 확인하는 절차
-        const OrderCheck= await Order.find({email: res.locals.user.email});
+        const OrderCheck = await Order.find({ email: token.email }).lean();
+
         let result;
-        
+
         for (const check of OrderCheck) {
-            if (check.number === orderNumber) {
+            if (check.number === Number(orderNumber)) {
                 try {
-                    result = await Order.updateOne({ number: Number(orderNumber) }, { orderState: false });
-                    break;  // 주문을 찾았으므로 반복 중단
+                    // 이미 취소된 주문인지 체크해주는 코드
+                    const foundOrder = await Order.findOne({ number: Number(orderNumber) }).lean();
+                    if (foundOrder.orderState === '주문취소') {
+                        const err = new Error('이미 취소된 주문입니다.');
+                        err.statusCode = 400;
+                        return next(err);
+                    }
+
+                    if (foundOrder.orderState === '배송완료') {
+                        const err = new Error('배송 완료된 상품이라 주문 취소가 불가합니다.');
+                        err.statusCode = 400;
+                        return next(err);
+                    }
+
+                    result = await Order.updateOne({ number: Number(orderNumber) }, { orderState: '주문취소' });
+
+                    break; // 주문을 찾았으므로 반복 중단
                 } catch (error) {
                     const err = new Error('주문 업데이트 중 오류가 발생했습니다.');
                     err.statusCode = 500;
@@ -254,6 +270,7 @@ router.put('/:orderNumber', async (req, res, next) => {
                 return next(err);
             }
         }
+
         // update가 제대로 됐는지 확인하는 코드
         if (result.modifiedCount === 0) {
             const err = new Error('주문을 찾을 수 없습니다.');
@@ -261,7 +278,6 @@ router.put('/:orderNumber', async (req, res, next) => {
             return next(err);
         }
         res.json({ err: null, data: '주문이 취소되었습니다.' });
-
     } catch (e) {
         next(e);
     }
