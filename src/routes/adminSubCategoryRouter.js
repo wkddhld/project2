@@ -28,6 +28,13 @@ router.post('/', async (req, res, next) => {
             err.statusCode = 400;
             return next(err);
         }
+        // 추가하려는 소분류 카테고리 이름이 DB에 존재할 경우
+        const existingSubCategoryByName = await SubCategory.findOne({ name: subCategoryName }).lean();
+        if (existingSubCategoryByName) {
+            const err = new Error('동일한 이름의 소분류 카테고리가 있습니다.');
+            err.statusCode = 400;
+            return next(err);
+        }
 
         // 새로운 소분류 카테고리 생성
         const newSubCategory = await SubCategory.create({
@@ -99,6 +106,15 @@ router.put('/:subCategoryNumber', async (req, res, next) => {
             return next(err);
         }
 
+        // 수정하려는 소분류 카테고리 이름이 DB에 존재할 경우
+        const existingSubCategoryByName = await SubCategory.findOne({ name: subCategoryName }).lean();
+        if (existingSubCategoryByName) {
+            const err = new Error('동일한 이름의 소분류 카테고리가 있습니다.');
+            err.statusCode = 400;
+            return next(err);
+        }
+
+        // 수정된 소분류 카테고리 정보 업데이트
         await SubCategory.updateOne(
             { number: Number(subCategoryNumber) },
             {
