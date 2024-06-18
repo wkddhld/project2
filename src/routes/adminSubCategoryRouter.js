@@ -22,15 +22,9 @@ router.post('/', async (req, res, next) => {
             return next(err);
         }
 
-        const foundSubCategory = await SubCategory.findOne({ number: Number(subCategoryNumber) }).lean();
-        // 소분류 카테고리가 3자리가 아니거나 숫자값이 아니거나 DB에 존재하지 않는 경우
-        if (
-            !Number.isInteger(Number(subCategoryNumber)) ||
-            subCategoryNumber.length !== 3 ||
-            foundSubCategory === null ||
-            foundSubCategory === undefined
-        ) {
-            const err = new Error('존재하지 않는 소분류 카테고리입니다.');
+        // 소분류 카테고리가 3자리가 아니거나 숫자값이 아닌 경우
+        if (!Number.isInteger(Number(subCategoryNumber)) || subCategoryNumber.toString().length !== 3) {
+            const err = new Error('소분류 카테고리는 3자리 숫자이어야 합니다.');
             err.statusCode = 400;
             return next(err);
         }

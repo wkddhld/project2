@@ -30,6 +30,36 @@ const storage = multer.diskStorage({
 });
 
 const upload = multer({ storage: storage });
+// 상품 조회
+router.get('/', async (req, res, next) => {
+    try {
+        // 모든 상품 정보 조회
+        const products = await Product.find().lean();
+        products.map((prod) => {});
+        const [category, subcategory] = await Promise.all([
+            Category.findOne({ number: foundData.categoryNumber }).lean(),
+            SubCategory.findOne({ number: foundData.subCategoryNumber }).lean(),
+        ]);
+
+        // // 카테고리 및 서브카테고리 정보 추가
+        // const productsWithCategories = await Promise.all(
+        //     products.map(async (product) => {
+        //         const category = await Category.findOne({ number: product.categoryNumber }).lean();
+        //         const subCategory = await subCategory.findOne({ number: product.subCategoryNumber }).lean();
+
+        //         return {
+        //             ...product,
+        //             categoryName: category ? category.name : null,
+        //             subCategoryName: subCategory ? subCategory.name : null,
+        //         };
+        //     })
+        // );
+
+        res.json({ err: null, data: { products, categoryName: category.name, subCategoryName: subcategory.name } });
+    } catch (e) {
+        next(e);
+    }
+});
 
 // 상품 추가
 // 파일을 하나만 업로드하기 때문에 single 미들웨어 사용
@@ -149,7 +179,7 @@ router.put('/:productNumber', async (req, res, next) => {
 
         // 상품명이 String type이 아니거나 빈 값일 경우 에러 핸들러로 에러 보냄
         if (typeof name !== 'string' || name === '') {
-            const err = new Error('상품명은 문자열 값이며 빈 값이 아니어야 합니다.');
+            const err = new Error('상품명은 문자열이며 빈 값이 아니어야 합니다.');
             err.statusCode = 400;
             return next(err);
         }
