@@ -209,7 +209,6 @@ router.put('/:productNumber', async (req, res, next) => {
                 subCategoryNumber: Number(subCategoryNumber),
             }
         );
-        console.log(name);
         res.status(201).json({ err: null, data: data });
     } catch (e) {
         next(e);
