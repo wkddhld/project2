@@ -100,14 +100,6 @@ router.put('/:subCategoryNumber', async (req, res, next) => {
             return next(err);
         }
 
-        // 수정하려는 소분류 카테고리 번호가 db에 존재하는지 체크하는 코드
-        const existingSubCategory = await SubCategory.findOne({ number: newSubCategoryNumber }).lean();
-        if (existingSubCategory !== null) {
-            const err = new Error('이미 존재하는 소분류 카테고리입니다.');
-            err.statusCode = 400;
-            return next(err);
-        }
-
         // 수정하려는 소분류 카테고리 이름이 DB에 존재할 경우
         const existingSubCategoryByName = await SubCategory.findOne({ name: subCategoryName }).lean();
         if (existingSubCategoryByName) {
@@ -116,6 +108,13 @@ router.put('/:subCategoryNumber', async (req, res, next) => {
             return next(err);
         }
 
+        // 수정하려는 소분류 카테고리 번호가 db에 존재하는지 체크하는 코드
+        const existingSubCategory = await SubCategory.findOne({ number: newSubCategoryNumber }).lean();
+        if (Number(subCategoryNumber) !== newSubCategoryNumber && existingSubCategory !== null) {
+            const err = new Error('소분류 카테고리를 수정할 수 없습니다.');
+            err.statusCode = 400;
+            return next(err);
+        }
         // 수정된 소분류 카테고리 정보 업데이트
         await SubCategory.updateOne(
             { number: Number(subCategoryNumber) },
