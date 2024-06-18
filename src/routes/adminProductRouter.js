@@ -144,7 +144,7 @@ router.post('/', upload.single('file'), async (req, res, next) => {
 });
 
 // 상품 수정
-router.put('/:productNumber', async (req, res, next) => {
+router.put('/:productNumber', upload.single('file'), async (req, res, next) => {
     try {
         const { productNumber } = req.params;
         const { name, price, information, categoryName, subCategoryName } = req.body;
@@ -172,7 +172,7 @@ router.put('/:productNumber', async (req, res, next) => {
         }
 
         // 상품 가격이 number type이 아니거나 음수일 경우 에러 핸들러로 에러 보냄
-        if (!Number.isInteger(price) || price < 0) {
+        if (!Number.isInteger(Number(price)) || Number(price) < 0) {
             const err = new Error('상품 가격은 양수의 숫자이어야 합니다.');
             err.statusCode = 400;
             return next(err);
@@ -209,8 +209,8 @@ router.put('/:productNumber', async (req, res, next) => {
 
         // 요청하는 데이터에 이미지 파일이 존재하는 경우
 
-        if (req.files.file) {
-            const filename = req.files.file.fieldName + '-' + req.files.file.name;
+        if (req.file) {
+            const filename = req.file.fieldname + '-' + req.file.originalname;
 
             // 변경하려는 이미지 업로드
             fs.linkSync('src/productImages/' + foundProduct.image, 'src/productImages/' + filename);
@@ -221,7 +221,7 @@ router.put('/:productNumber', async (req, res, next) => {
             const updateData = await Product.updateOne(
                 { number: Number(productNumber) },
                 {
-                    number: Number(newProductNumber),
+                    number: Number(productNumber),
                     name,
                     price,
                     image: filename,
