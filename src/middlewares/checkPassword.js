@@ -3,9 +3,9 @@ const bcrypt = require('bcrypt');
 const express = require('express');
 const router = express.Router();
 
-router.post('/checkPassword', async (req, res, next) => {
+router.use('/checkPassword', async (req, res, next) => {
     try {
-        const user = await User.findOne({ email: res.locals.user.email });
+        const user = await User.findOne({ email: res.locals.user.email }).lean();
 
         // 사용자가 없는 경우
         if (!user) {
