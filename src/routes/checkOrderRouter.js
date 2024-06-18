@@ -284,17 +284,13 @@ router.put('/:orderNumber', async (req, res, next) => {
                     }
 
                     result = await Order.updateOne({ number: Number(orderNumber) }, { orderState: '주문취소' });
-
                     break; // 주문을 찾았으므로 반복 중단
+                    
                 } catch (error) {
                     const err = new Error('주문 업데이트 중 오류가 발생했습니다.');
                     err.statusCode = 500;
                     return next(err);
                 }
-            } else {
-                const err = new Error('사용자의 주문이 아닙니다.');
-                err.statusCode = 404;
-                return next(err);
             }
         }
 
