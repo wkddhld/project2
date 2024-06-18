@@ -27,14 +27,14 @@ const isAuthenticatedMiddleware = (req, res, next) => {
                     return next(err);
                 }
             }
+            res.locals.user = decoded;
             next();
         });
     } else {
         // 비회원인 경우
         const err = new Error('인증되지 않은 사용자입니다.');
         err.statusCode = 401;
-        next(err);
-        return;
+        return next(err);
     }
 };
 

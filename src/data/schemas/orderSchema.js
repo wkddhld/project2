@@ -1,4 +1,5 @@
 const { Schema } = require('mongoose');
+
 //주문정보 스키마
 const orderSchema = new Schema(
     {
@@ -12,6 +13,7 @@ const orderSchema = new Schema(
         },
         date: {
             type: Date,
+            default: Date.now,
             required: true,
         },
         address: {
@@ -30,16 +32,16 @@ const orderSchema = new Schema(
         products: {
             type: [
                 {
-                    name: {
+                    productName: {
                         type: String,
                         required: true,
                     },
                     quantity: {
-                        type: String,
+                        type: Number,
                         required: true,
                     },
                     price: {
-                        type: String,
+                        type: Number,
                         required: true,
                     },
                 },
@@ -48,9 +50,8 @@ const orderSchema = new Schema(
         },
 
         orderState: {
-            type: Boolean,
+            type: String,
             required: true,
-            default: false,
         },
     },
     {

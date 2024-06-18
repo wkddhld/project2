@@ -16,6 +16,7 @@ const subCategorySchema = new Schema(
         },
     },
     {
+        // _안나옴(_v1)
         versionKey: false,
     }
 );
