@@ -14,7 +14,7 @@ function generateNumericOrderNumber() {
     return nanoid();
 }
 
-// 이미지 파일 저장소
+// // 이미지 파일 저장소
 const storage = multer.diskStorage({
     // 저장한 공간 정보 : 하드디스크에 저장
     destination: function (req, file, cb) {
@@ -89,7 +89,7 @@ router.post('/', upload.single('file'), async (req, res, next) => {
             err.statusCode = 400;
             return next(err);
         }
-        const foundSubCategory = await SubCategory.findOne({ number: Number(categoryNumber) }).lean();
+        const foundSubCategory = await SubCategory.findOne({ number: Number(subCategoryNumber) }).lean();
         // 소분류 카테고리가 3자리가 아니거나 숫자값이 아니거나 DB에 존재하지 않는 경우
         if (
             !Number.isInteger(Number(subCategoryNumber)) ||
