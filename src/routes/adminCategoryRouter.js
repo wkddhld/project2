@@ -62,10 +62,10 @@ router.put('/:categoryNumber', async (req, res, next) => {
             return next(err);
         }
 
-        // 수정하려는 카테고리 번호가 db에 있는지 체크하는 코드가 필요할 것 같습니다
         const existingCategory = await Category.findOne({ number: newCategoryNumber });
-        if (existingCategory !== null) {
-            const err = new Error('존재하는 대분류 카테고리입니다.');
+        // 새로운 카테고리 번호가 현재 카테고리 번호와 다르고 수정하려는 카테고리 번호가 db에 존재하는 경우
+        if (newCategoryNumber !== Number(categoryNumber) && existingCategory !== null) {
+            const err = new Error('대분류 카테고리 번호를 변경할 수 없습니다.');
             err.statusCode = 400;
             return next(err);
         }
@@ -79,7 +79,7 @@ router.put('/:categoryNumber', async (req, res, next) => {
 
         return res.status(201).json({
             err: null,
-            data: { categoryName: category.name, categoryNumber: category.number },
+            data: { categoryName, categoryNumber: newCategoryNumber },
         });
     } catch (e) {
         next(e);
