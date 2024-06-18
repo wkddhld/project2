@@ -3,11 +3,19 @@ const router = express.Router();
 const { Category, SubCategory, Product } = require('../data');
 const fs = require('fs');
 
+
 // 대분류 카테고리 추가
 router.post('/', async (req, res, next) => {
     try {
         const { categoryNumber, categoryName } = req.body; // 요청 본문에서 categoryNum과 categoryName 추출
-
+        // 추가하려는 대분류 카테고리 이름이 DB에 존재할 경우
+        const existingCategoryName = await Category.findOne({ name: categoryName }).lean();
+        if (existingCategoryName !== null) {
+            const err = new Error('이미 존재하는 카테고리 이름 입니다.');
+            err.statusCode = 400;
+            return next(err);
+        }
+ 
         // 추가하려는 대분류 카테고리 번호가 2자리 초과이거나 숫자값이 아닌 경우
         if (!Number.isInteger(categoryNumber) || categoryNumber.toString().length > 2) {
             const err = new Error('대분류 카테고리는 2자리 이하의 숫자이어야 합니다.');
@@ -58,6 +66,14 @@ router.put('/:categoryNumber', async (req, res, next) => {
         // 수정하려는 대분류 카테고리 번호가 2자리 초과이거나 숫자값이 아닌 경우
         if (!Number.isInteger(newCategoryNumber) || newCategoryNumber.toString().length > 2) {
             const err = new Error('대분류 카테고리는 2자리 이하의 숫자이어야 합니다.');
+            err.statusCode = 400;
+            return next(err);
+        }
+
+        // 수정하려는 대분류 카테고리 이름이 DB에 존재할 경우
+        const existingCategoryName = await Category.findOne({ name: categoryName }).lean();
+        if (existingCategoryName !== null) {
+            const err = new Error('이미 존재하는 카테고리 이름 입니다.');
             err.statusCode = 400;
             return next(err);
         }
