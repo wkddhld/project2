@@ -1,5 +1,4 @@
 const isAuthenticatedAdminMiddleware = require('./isAuthenticatedAdmin');
 const isAuthenticatedMiddleware = require('./isAuthenticated');
-
-module.exports = {  isAuthenticatedAdminMiddleware, isAuthenticatedMiddleware };
-
+const checkPasswordMiddleware = require('./checkPasswordMiddleware');
+module.exports = { isAuthenticatedAdminMiddleware, isAuthenticatedMiddleware, checkPasswordMiddleware };
