@@ -1,6 +1,6 @@
 const express = require('express');
 const router = express.Router();
-const { Product } = require('../data');
+const { Product, Category, SubCategory } = require('../data');
 const multer = require('multer');
 const path = require('path');
 const { customAlphabet } = require('nanoid');
@@ -35,14 +35,15 @@ const upload = multer({ storage: storage });
 // 파일을 하나만 업로드하기 때문에 single 미들웨어 사용
 router.post('/', upload.single('file'), async (req, res, next) => {
     try {
+        // 텍스트 데이터들은 req.body로 받음
+        const { name, price, stock, information, origin, categoryNumber, subCategoryNumber } = req.body;
+
         // 파일이 없을 경우 에러처리
         if (!req.file) {
             const err = new Error('이미지 업로드해주세요.');
             err.statusCode = 400;
             return next(err);
         }
-        // 텍스트 데이터들은 req.body로 받음
-        const { name, price, stock, information, origin, categoryNumber, subCategoryNumber } = req.body;
 
         // 상품명이 String type이 아니거나 빈 값일 경우 에러 핸들러로 에러 보냄
         if (typeof name !== 'string' || name === '') {
@@ -53,30 +54,43 @@ router.post('/', upload.single('file'), async (req, res, next) => {
 
         // 상품 가격이 number type이 아니거나 음수일 경우 에러 핸들러로 에러 보냄
         if (!Number.isInteger(Number(price)) || Number(price) < 0) {
-            const err = new Error('상품 가격은 숫자값이어야 하고 양수여야 합니다.');
+            const err = new Error('상품 가격은 양수의 숫자이어야 합니다.');
             err.statusCode = 400;
             return next(err);
         }
 
-        // 상품 재고가 number type이 아니거나 음수일 경우 에러 핸들러로 에러 보냄
+        // 상품 재고가 number type이 아니거나 음수일 경우
         if (!Number.isInteger(Number(stock)) || Number(stock) < 0) {
-            const err = new Error('상품 재고는 숫자값이어야 하고 양수여야 합니다.');
+            const err = new Error('상품 재고는 상품 가격은 양수의 숫자이어야 합니다.');
             err.statusCode = 400;
             return next(err);
         }
 
-        // 대분류 카테고리가 number type이 아닐 경우 에러 핸들러로 에러 보냄
-        if (!Number.isInteger(Number(categoryNumber))) {
-            const err = new Error('대분류 카테고리는 숫자값이어야 합니다.');
+        const foundCategory = await Category.findOne({ number: Number(categoryNumber) }).lean();
+        // 대분류 카테고리가 2자리 초과이거나 숫자값이 아니거나 DB에 존재하지 않는 경우
+        if (
+            !Number.isInteger(Number(categoryNumber)) ||
+            categoryNumber.length > 2 ||
+            foundCategory === null ||
+            foundCategory === undefined
+        ) {
+            const err = new Error('존재하지 않는 대분류 카테고리입니다.');
             err.statusCode = 400;
             return next(err);
         }
-        // 소분류 카테고리가 number type이 아닐 경우 에러 핸들러로 에러 보냄
-        if (!Number.isInteger(Number(subCategoryNumber))) {
-            const err = new Error('소분류 카테고리는 숫자값이어야 합니다.');
+        const foundSubCategory = await SubCategory.findOne({ number: Number(categoryNumber) }).lean();
+        // 소분류 카테고리가 3자리가 아니거나 숫자값이 아니거나 DB에 존재하지 않는 경우
+        if (
+            !Number.isInteger(Number(subCategoryNumber)) ||
+            subCategoryNumber.length !== 3 ||
+            foundSubCategory === null ||
+            foundSubCategory === undefined
+        ) {
+            const err = new Error('존재하지 않는 소분류 카테고리입니다.');
             err.statusCode = 400;
             return next(err);
         }
+
         // 상품 번호(업로드한 날짜 + 랜덤 4자리 숫자)
         const number = Date.now() + generateNumericOrderNumber();
 
@@ -111,26 +125,24 @@ router.post('/', upload.single('file'), async (req, res, next) => {
         next(e);
     }
 });
-// upload.single('file')
+
 // 상품 수정
 router.put('/:productNumber', async (req, res, next) => {
     try {
         const { productNumber } = req.params;
+        const { name, price, stock, information, categoryNumber, subCategoryNumber } = req.body;
 
         // productNumber가 number type이 아닐 경우 에러 핸들러로 에러 보냄
         if (!Number.isInteger(Number(productNumber))) {
-            const err = new Error('요청하는 페이지를 찾을 수 없습니다.');
+            const err = new Error('요청하는 상품을 찾을 수 없습니다.');
             err.statusCode = 404;
             return next(err);
         }
 
-        const { name, price, stock, information, categoryNumber, subCategoryNumber } = req.body;
-
         const foundProduct = await Product.findOne({ number: Number(productNumber) }).lean();
         // productNumber에 해당하는 상품을 찾지 못할 경우 에러 핸들러로 에러 보냄
-
         if (foundProduct === null) {
-            const err = new Error('변경 대상의 상품이 없습니다.');
+            const err = new Error('요청하는 상품을 찾을 수 없습니다.');
             err.statusCode = 404;
             return next(err);
         }
@@ -141,29 +153,42 @@ router.put('/:productNumber', async (req, res, next) => {
             err.statusCode = 400;
             return next(err);
         }
+
         // 상품 가격이 number type이 아니거나 음수일 경우 에러 핸들러로 에러 보냄
         if (!Number.isInteger(Number(price)) || Number(price) < 0) {
-            const err = new Error('상품 가격은 숫자값이어야 하고 양수여야 합니다.');
+            const err = new Error('상품 가격은 양수의 숫자이어야 합니다.');
             err.statusCode = 400;
             return next(err);
         }
 
         // 상품 재고가 number type이 아니거나 음수일 경우 에러 핸들러로 에러 보냄
         if (!Number.isInteger(Number(stock)) || Number(stock) < 0) {
-            const err = new Error('상품 재고는 숫자값이어야 하고 양수여야 합니다.');
+            const err = new Error('상품 재고는 양수의 숫자이어야 합니다.');
             err.statusCode = 400;
             return next(err);
         }
 
-        // 대분류 카테고리가 number type이 아닐 경우 에러 핸들러로 에러 보냄
-        if (!Number.isInteger(Number(categoryNumber))) {
-            const err = new Error('대분류 카테고리는 숫자값이어야 합니다.');
+        const foundCategory = await Category.findOne({ number: Number(categoryNumber) }).lean();
+        // 대분류 카테고리가 2자리 초과이거나 숫자값이 아니거나 DB에 존재하지 않는 경우
+        if (
+            !Number.isInteger(Number(categoryNumber)) ||
+            categoryNumber.length > 2 ||
+            foundCategory === null ||
+            foundCategory === undefined
+        ) {
+            const err = new Error('존재하지 않는 대분류 카테고리입니다.');
             err.statusCode = 400;
             return next(err);
         }
-        // 소분류 카테고리가 number type이 아닐 경우 에러 핸들러로 에러 보냄
-        if (!Number.isInteger(Number(subCategoryNumber))) {
-            const err = new Error('소분류 카테고리는 숫자값이어야 합니다.');
+        const foundSubCategory = await SubCategory.findOne({ number: Number(subCategoryNumber) }).lean();
+        // 소분류 카테고리가 3자리가 아니거나 숫자값이 아니거나 DB에 존재하지 않는 경우
+        if (
+            !Number.isInteger(Number(subCategoryNumber)) ||
+            subCategoryNumber.length !== 3 ||
+            foundSubCategory === null ||
+            foundSubCategory === undefined
+        ) {
+            const err = new Error('존재하지 않는 소분류 카테고리입니다.');
             err.statusCode = 400;
             return next(err);
         }
@@ -172,6 +197,7 @@ router.put('/:productNumber', async (req, res, next) => {
         const newProductNumber = Date.now() + generateNumericOrderNumber();
 
         // 요청하는 데이터에 이미지 파일이 존재하는 경우
+
         if (req.files.file) {
             const filename = req.files.file.fieldName + '-' + req.files.file.name;
 
@@ -218,15 +244,17 @@ router.put('/:productNumber', async (req, res, next) => {
 // 상품 삭제
 router.delete('/:productNumber', async (req, res, next) => {
     const { productNumber } = req.params;
+
     // productNumber가 숫자값이 아닌 경우
     if (!Number.isInteger(Number(productNumber))) {
         const err = new Error('요청하는 상품을 찾을 수 없습니다.');
         err.statusCode = 404;
         return next(err);
     }
+
     // productNumber에 해당하는 상품이 없을 경우
     const foundData = await Product.findOne({ number: Number(productNumber) }).lean();
-    if (foundData === null) {
+    if (foundData === null || foundData === undefined) {
         const err = new Error('요청하는 상품을 찾을 수 없습니다.');
         err.statusCode = 404;
         return next(err);
@@ -237,6 +265,6 @@ router.delete('/:productNumber', async (req, res, next) => {
 
     // productNumber와 일치하는 이미지와 상품 삭제
     await Product.deleteOne({ number: Number(productNumber) });
-    res.status(204).json({ err: null, data: '해당 상품을 삭제하였습니다.' });
+    res.status(204).json();
 });
 module.exports = router;
