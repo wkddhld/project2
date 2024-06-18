@@ -71,7 +71,7 @@ router.put('/:categoryNumber', async (req, res, next) => {
         }
 
         // categoryNumber에 해당하는 카테고리를  업데이트
-        const category = await Category.updateOne(
+        await Category.updateOne(
             { number: Number(categoryNumber) },
             { number: newCategoryNumber, name: categoryName },
             { new: true } // 업데이트된 문서를 반환하도록 설정
