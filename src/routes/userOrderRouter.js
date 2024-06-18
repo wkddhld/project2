@@ -5,11 +5,11 @@ const { customAlphabet } = require('nanoid');
 const jwt = require('jsonwebtoken');
 const bcrypt = require('bcrypt');
 const nodemailer = require('nodemailer');
-require('dotenv').config();
 
 // 주문번호 만들기
 const numbers = '0123456789';
 const nanoid = customAlphabet(numbers, 10); // 0-9 랜덤으로 10자리 숫자 만들어주는 코드
+
 function generateNumericOrderNumber() {
     return nanoid();
 }
@@ -40,7 +40,7 @@ router.get('/', async (req, res, next) => {
         const { userCookies, guestCookies } = req.cookies;
 
         if (!userCookies && !guestCookies) {
-            const error = new Error('쿠키가 없습니다.');
+            const error = new Error('쿠키가 존재하지 않습니다.');
             error.statusCode = 401;
             return next(error);
         }
@@ -54,12 +54,12 @@ router.get('/', async (req, res, next) => {
         }
 
         // 주문번호 검색(이메일 검색)
-        const order = await Order.find({ email: decoded.email });
+        const order = await Order.find({ email: decoded.email }).lean();
 
-        // 주문번호가 없을시
+        // 주문번호가 없을 시
         if (order.length === 0) {
-            const error = new Error('주문을 찾을 수 없습니다.');
-            error.statusCode = 404;
+            const error = new Error('주문을 한 내역이 없습니다.');
+            error.statusCode = 400;
             return next(error);
         }
 
@@ -82,15 +82,17 @@ router.post('/', async (req, res, next) => {
             err.statusCode = 400;
             return next(err);
         }
+
         // 이름이  string type이 아니거나 빈 값일 경우
         if (typeof name !== 'string' || name === '') {
-            const err = new Error('이메일은 문자열 값이며 빈 값이 아니어야 합니다.');
+            const err = new Error('이메일은 문자열이며 빈 값이 아니어야 합니다.');
             err.statusCode = 400;
             return next(err);
         }
+
         // 이메일이  string type이 아니거나 빈 값일 경우
         if (typeof email !== 'string' || email === '') {
-            const err = new Error('이메일은 문자열 값이며 빈 값이 아니어야 합니다.');
+            const err = new Error('이메일은 문자열이며 빈 값이 아니어야 합니다.');
             err.statusCode = 400;
             return next(err);
         }
@@ -104,36 +106,37 @@ router.post('/', async (req, res, next) => {
 
         // 전화번호가  string type이 아니거나 빈 값이거나 길이가 11자리가 아닌 경우
         if (typeof phoneNumber !== 'string' || phoneNumber === '' || phoneNumber.length !== 11) {
-            const err = new Error('이메일은 문자열 값이며 빈 값이 아니어야 하고 11자리이어야 합니다.');
+            const err = new Error('전화번호는 문자열이며 빈 값이 아니어야 하고 11자리이어야 합니다.');
             err.statusCode = 400;
             return next(err);
         }
 
         // 우편번호 string type이 아니거나 빈 값인 경우
         if (typeof postAddress !== 'string' || postAddress === '') {
-            const err = new Error('우편번호는 문자열 값이며 빈 값이 아니어야 합니다.');
+            const err = new Error('우편번호는 문자열이며 빈 값이 아니어야 합니다.');
             err.statusCode = 400;
             return next(err);
         }
 
         // 도로명 주소가 string type이 아니거나 빈 값인 경우
         if (typeof address !== 'string' || address === '') {
-            const err = new Error('도로명 주소는 문자열 값이며 빈 값이 아니어야 합니다.');
+            const err = new Error('도로명 주소는 문자열이며 빈 값이 아니어야 합니다.');
             err.statusCode = 400;
             return next(err);
         }
 
         // 상세 주소가  string type이 아니거나 빈 값인 경우
         if (typeof detailAddress !== 'string' || detailAddress === '') {
-            const err = new Error('상세 주소는 문자열 값이며 빈 값이 아니어야 합니다.');
+            const err = new Error('상세 주소는 문자열이며 빈 값이 아니어야 합니다.');
             err.statusCode = 400;
             return next(err);
         }
-        // 쿠키가 없으면 비회원
-        if (req.cookies && Object.keys(req.cookies).length === 0) {
+
+        // 쿠키가 없거나 guestCookies 가지고 있으면 비회원
+        if ((req.cookies && Object.keys(req.cookies).length === 0) || req.cookies.guestCookies) {
             // 비밀번호가 숫자값이 아니거나 4자리가 아닌 경우
             if (!Number.isInteger(password) || password.toString().length !== 4) {
-                const err = new Error('비밀번호는 네 자리 숫자값이어야 합니다.');
+                const err = new Error('비밀번호는 4자리 숫자이어야 합니다.');
                 err.statusCode = 400;
                 return next(err);
             }
@@ -171,7 +174,7 @@ router.post('/', async (req, res, next) => {
             const newGuestOrder = new Order(guestOrderData);
             await newGuestOrder.save();
 
-            // 생성한 주문번호 이메일로 전송하는 로직 추가해야 함
+            // 생성한 주문번호 이메일로 전송하는 로직
             let transporter = nodemailer.createTransport({
                 service: 'gmail',
                 auth: {
@@ -189,13 +192,9 @@ router.post('/', async (req, res, next) => {
 
             transporter.sendMail(mailOptions, (error, info) => {
                 if (error) {
-                    return console.log(error);
+                    return next(error);
                 }
             });
-
-            // 세션 쿠키 사용하는데, 비회원인 사람이 주문하고 브라우저 닫으면 토큰은 사라지는데
-            // 이 경우에는 어떡하죠..?
-            // 비회원 위한 쿠키 및 토큰 생성
 
             const token = jwt.sign(
                 {
@@ -203,13 +202,13 @@ router.post('/', async (req, res, next) => {
                     phoneNumber,
                 },
                 process.env.GUEST_JWT_SECRET_KEY,
-                { expiresIn: '30m' }
+                { expiresIn: '1h' }
             );
 
             return res
                 .cookie('guestCookies', token, { httpOnly: true, secure: true })
                 .status(201)
-                .json({ orderNumber: Number(generateNumericOrderNumber()), message: '주문 완료되었습니다.' });
+                .json({ orderNumber: guestOrderData.number, message: '주문 완료되었습니다.' });
         }
         // data를 db에 저장
         const userData = {
@@ -227,7 +226,7 @@ router.post('/', async (req, res, next) => {
 
         res.status(201).json({
             err: null,
-            data: { orderNumber: Number(generateNumericOrderNumber()), message: '주문 완료되었습니다.' },
+            data: { orderNumber: userData.number, message: '주문 완료되었습니다.' },
         });
     } catch (e) {
         next(e);
@@ -254,7 +253,7 @@ router.put('/:orderNumber', async (req, res, next) => {
             token = verifyToken(userCookies, process.env.USER_JWT_SECRET_KEY);
         }
 
-        // 주문번호가 number type이 아닌 경우
+        // 주문번호가 숫자가 아닌 경우
         if (!Number.isInteger(Number(orderNumber))) {
             const err = new Error('해당하는 주문 내역을 찾을 수 없습니다.');
             err.statusCode = 404;
@@ -287,9 +286,7 @@ router.put('/:orderNumber', async (req, res, next) => {
                     break; // 주문을 찾았으므로 반복 중단
                     
                 } catch (error) {
-                    const err = new Error('주문 업데이트 중 오류가 발생했습니다.');
-                    err.statusCode = 500;
-                    return next(err);
+                    next(err);
                 }
             }
         }
