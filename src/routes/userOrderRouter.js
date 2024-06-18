@@ -281,8 +281,8 @@ router.put('/:orderNumber', async (req, res, next) => {
                     }
 
                     result = await Order.updateOne({ number: Number(orderNumber) }, { orderState: '주문취소' });
-
                     break; // 주문을 찾았으므로 반복 중단
+                    
                 } catch (error) {
                     next(err);
                 }
