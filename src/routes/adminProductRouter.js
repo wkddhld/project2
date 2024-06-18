@@ -34,28 +34,9 @@ const upload = multer({ storage: storage });
 router.get('/', async (req, res, next) => {
     try {
         // 모든 상품 정보 조회
-        const products = await Product.find().lean();
-        products.map((prod) => {});
-        const [category, subcategory] = await Promise.all([
-            Category.findOne({ number: foundData.categoryNumber }).lean(),
-            SubCategory.findOne({ number: foundData.subCategoryNumber }).lean(),
-        ]);
+        const products = await Product.find({}).lean();
 
-        // // 카테고리 및 서브카테고리 정보 추가
-        // const productsWithCategories = await Promise.all(
-        //     products.map(async (product) => {
-        //         const category = await Category.findOne({ number: product.categoryNumber }).lean();
-        //         const subCategory = await subCategory.findOne({ number: product.subCategoryNumber }).lean();
-
-        //         return {
-        //             ...product,
-        //             categoryName: category ? category.name : null,
-        //             subCategoryName: subCategory ? subCategory.name : null,
-        //         };
-        //     })
-        // );
-
-        res.json({ err: null, data: { products, categoryName: category.name, subCategoryName: subcategory.name } });
+        res.json({ err: null, data: products });
     } catch (e) {
         next(e);
     }
