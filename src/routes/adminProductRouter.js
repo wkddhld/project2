@@ -33,19 +33,30 @@ const upload = multer({ storage: storage });
 // 상품 조회
 router.get('/', async (req, res, next) => {
     try {
-        // 모든 상품 정보 조회
-        const [products, category, subCategory] = await Promise.all([
-            Product.find({}).lean(),
-            Category.find({}).lean(),
-            SubCategory.find({}).lean(),
-        ]);
-        const categoryName = category.map((product) => {
-            return product.name;
-        });
-        const subCategoryName = subCategory.map((product) => {
-            return product.name;
-        });
-        res.json({ err: null, data: { products, categoryName, subCategoryName } });
+        // 번호, 이름, 가격, 카테고리이름, 소분류 카테고리 이름, 원산지, 이미지, 정보
+        const products = await Product.find().lean();
+        // 카테고리 및 서브카테고리 정보 추가
+        const productsWithCategories = await Promise.all(
+            products.map(async (product) => {
+                const [category, subCategory] = await Promise.all([
+                    Category.findOne({ number: product.categoryNumber }).lean(),
+                    SubCategory.findOne({ number: product.subCategoryNumber }).lean(),
+                ]);
+
+                return {
+                    number: product.number,
+                    name: product.name,
+                    price: product.price,
+                    origin: product.origin,
+                    image: product.image,
+                    information: product.information,
+                    categoryName: category.name,
+                    subCategoryName: subCategory.name,
+                };
+            })
+        );
+
+        res.json({ err: null, data: productsWithCategories });
     } catch (e) {
         next(e);
     }
