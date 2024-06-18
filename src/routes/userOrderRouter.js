@@ -58,9 +58,7 @@ router.get('/', async (req, res, next) => {
 
         // 주문번호가 없을 시
         if (order.length === 0) {
-            const error = new Error('주문을 한 내역이 없습니다.');
-            error.statusCode = 400;
-            return next(error);
+            return res.json({ err: null, data: '주문 내역이 없습니다.' });
         }
 
         // 주문정보 전송
