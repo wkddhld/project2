@@ -43,7 +43,21 @@ const productSchema = new Schema(
     },
     {
         versionKey: false,
+        toJSON: { virtuals: true },
+        toObject: { virtuals: true },
     }
 );
+
+productSchema.virtual('category', {
+    ref: 'categories',
+    localField: 'categoryNumber',
+    foreignField: 'number',
+});
+
+productSchema.virtual('subCategory', {
+    ref: 'subcategories',
+    localField: 'subCategoryNumber',
+    foreignField: 'number',
+});
 
 module.exports = productSchema;
