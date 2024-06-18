@@ -3,7 +3,6 @@ const router = express.Router();
 const { SubCategory, Category, Product } = require('../data');
 const fs = require('fs');
 
-
 // 소분류 카테고리 추가
 router.post('/', async (req, res, next) => {
     try {
@@ -146,7 +145,7 @@ router.delete('/:subCategoryNumber', async (req, res, next) => {
 
         //카테고리
         const foundSubCategory = await SubCategory.findOne({ number: Number(subCategoryNumber) }).lean();
-        
+
         //카테고리 예외처리
         if (
             !Number.isInteger(Number(subCategoryNumber)) ||
@@ -178,7 +177,7 @@ router.delete('/:subCategoryNumber', async (req, res, next) => {
         // 소분류 카테고리에 해당하는 상품 삭제
 
         await Product.deleteMany({ subCategoryNumber: Number(subCategoryNumber) });
-        
+
         return res.status(204).json();
     } catch (e) {
         next(e);
