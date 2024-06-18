@@ -1,6 +1,6 @@
 const express = require('express');
 const router = express.Router();
-const { Category } = require('../data');
+const { Category, SubCategory, Product } = require('../data');
 
 
 // 대분류 카테고리 추가
@@ -118,7 +118,16 @@ router.delete('/:categoryNumber', async (req, res, next) => {
             err.statusCode = 404;
             return next(err);
         }
+        const subCategories = await SubCategory.find({ mainCategoryNumber: Number(categoryNumber) }).lean();
         // categoryNumber에 해당하는 카테고리를 삭제
+        for (const subCategory of subCategories) {
+            await Product.deleteMany({ subCategoryNumber: subCategory.number });
+        }
+
+        // 소분류 카테고리 삭제
+        await SubCategory.deleteMany({ mainCategoryNumber: Number(categoryNumber) });
+
+        // 대분류 카테고리 삭제
         await Category.deleteOne({ number: Number(categoryNumber) });
 
         return res.status(204).json();
@@ -126,4 +135,5 @@ router.delete('/:categoryNumber', async (req, res, next) => {
         next(e);
     }
 });
+
 module.exports = router;
