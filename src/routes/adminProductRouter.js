@@ -34,9 +34,18 @@ const upload = multer({ storage: storage });
 router.get('/', async (req, res, next) => {
     try {
         // 모든 상품 정보 조회
-        const products = await Product.find({}).lean();
-
-        res.json({ err: null, data: products });
+        const [products, category, subCategory] = await Promise.all([
+            Product.find({}).lean(),
+            Category.find({}).lean(),
+            SubCategory.find({}).lean(),
+        ]);
+        const categoryName = category.map((product) => {
+            return product.name;
+        });
+        const subCategoryName = subCategory.map((product) => {
+            return product.name;
+        });
+        res.json({ err: null, data: { products, categoryName, subCategoryName } });
     } catch (e) {
         next(e);
     }
