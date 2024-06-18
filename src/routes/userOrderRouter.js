@@ -179,7 +179,7 @@ router.post('/', async (req, res, next) => {
                     pass: process.env.EMAIL_PASS,
                 },
             });
-
+            console.log(transporter);
             let mailOptions = {
                 from: process.env.EMAIL_USER,
                 to: email,

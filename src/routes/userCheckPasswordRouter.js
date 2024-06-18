@@ -3,7 +3,7 @@ const bcrypt = require('bcrypt');
 const express = require('express');
 const router = express.Router();
 
-router.use('/checkPassword', async (req, res, next) => {
+router.use('/', async (req, res, next) => {
     try {
         const user = await User.findOne({ email: res.locals.user.email }).lean();
 
