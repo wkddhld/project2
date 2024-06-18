@@ -62,7 +62,7 @@ router.get('/', async (req, res, next) => {
 router.post('/', upload.single('file'), async (req, res, next) => {
     try {
         // 텍스트 데이터들은 req.body로 받음
-        const { name, price, stock, information, origin, categoryNumber, subCategoryNumber } = req.body;
+        const { name, price, information, origin, categoryName, subCategoryName } = req.body;
 
         // 파일이 없을 경우 에러처리
         if (!req.file) {
@@ -85,18 +85,11 @@ router.post('/', upload.single('file'), async (req, res, next) => {
             return next(err);
         }
 
-        // 상품 재고가 number type이 아니거나 음수일 경우
-        if (!Number.isInteger(Number(stock)) || Number(stock) < 0) {
-            const err = new Error('상품 재고는 상품 가격은 양수의 숫자이어야 합니다.');
-            err.statusCode = 400;
-            return next(err);
-        }
-
-        const foundCategory = await Category.findOne({ number: Number(categoryNumber) }).lean();
-        // 대분류 카테고리가 2자리 초과이거나 숫자값이 아니거나 DB에 존재하지 않는 경우
+        const foundCategory = await Category.findOne({ name: categoryName }).lean();
+        // 대분류 카테고리 이름이 문자열이 아니거나 빈 값이 아니거나 DB에 존재하지 않는 경우
         if (
-            !Number.isInteger(Number(categoryNumber)) ||
-            categoryNumber.length > 2 ||
+            typeof categoryName !== 'string' ||
+            categoryName === '' ||
             foundCategory === null ||
             foundCategory === undefined
         ) {
@@ -104,11 +97,11 @@ router.post('/', upload.single('file'), async (req, res, next) => {
             err.statusCode = 400;
             return next(err);
         }
-        const foundSubCategory = await SubCategory.findOne({ number: Number(subCategoryNumber) }).lean();
-        // 소분류 카테고리가 3자리가 아니거나 숫자값이 아니거나 DB에 존재하지 않는 경우
+        const foundSubCategory = await SubCategory.findOne({ name: subCategoryName }).lean();
+        // 소분류 카테고리 이름이 문자열이 아니거나 빈 값이 아니거나 DB에 존재하지 않는 경우
         if (
-            !Number.isInteger(Number(subCategoryNumber)) ||
-            subCategoryNumber.length !== 3 ||
+            typeof subCategoryName !== 'string' ||
+            subCategoryName === '' ||
             foundSubCategory === null ||
             foundSubCategory === undefined
         ) {
@@ -118,19 +111,18 @@ router.post('/', upload.single('file'), async (req, res, next) => {
         }
 
         // 상품 번호(업로드한 날짜 + 랜덤 4자리 숫자)
-        const number = Date.now() + generateNumericOrderNumber();
+        const productNumber = Date.now() + generateNumericOrderNumber();
 
         // 상품 정보 db에 저장
         const data = await Product.create({
-            number: Number(number),
+            number: Number(productNumber),
             name,
-            price: Number(price),
-            stock: Number(stock),
+            price,
             information,
             origin,
             image: req.file.filename,
-            categoryNumber: Number(categoryNumber),
-            subCategoryNumber: Number(subCategoryNumber),
+            categoryNumber: foundCategory.number,
+            subCategoryNumber: foundSubCategory.number,
         });
 
         res.status(201).json({
@@ -139,7 +131,6 @@ router.post('/', upload.single('file'), async (req, res, next) => {
                 number: data.number,
                 name: data.name,
                 price: data.price,
-                stock: data.stock,
                 information: data.information,
                 origin: data.origin,
                 image: data.image,
@@ -156,7 +147,7 @@ router.post('/', upload.single('file'), async (req, res, next) => {
 router.put('/:productNumber', async (req, res, next) => {
     try {
         const { productNumber } = req.params;
-        const { name, price, stock, information, categoryNumber, subCategoryNumber } = req.body;
+        const { name, price, information, categoryName, subCategoryName } = req.body;
 
         // productNumber가 number type이 아닐 경우 에러 핸들러로 에러 보냄
         if (!Number.isInteger(Number(productNumber))) {
@@ -181,24 +172,17 @@ router.put('/:productNumber', async (req, res, next) => {
         }
 
         // 상품 가격이 number type이 아니거나 음수일 경우 에러 핸들러로 에러 보냄
-        if (!Number.isInteger(Number(price)) || Number(price) < 0) {
+        if (!Number.isInteger(price) || price < 0) {
             const err = new Error('상품 가격은 양수의 숫자이어야 합니다.');
             err.statusCode = 400;
             return next(err);
         }
 
-        // 상품 재고가 number type이 아니거나 음수일 경우 에러 핸들러로 에러 보냄
-        if (!Number.isInteger(Number(stock)) || Number(stock) < 0) {
-            const err = new Error('상품 재고는 양수의 숫자이어야 합니다.');
-            err.statusCode = 400;
-            return next(err);
-        }
-
-        const foundCategory = await Category.findOne({ number: Number(categoryNumber) }).lean();
-        // 대분류 카테고리가 2자리 초과이거나 숫자값이 아니거나 DB에 존재하지 않는 경우
+        const foundCategory = await Category.findOne({ name: categoryName }).lean();
+        // 대분류 카테고리 이름이 문자열이 아니거나 빈 값이거나 DB에 존재하지 않는 경우
         if (
-            !Number.isInteger(Number(categoryNumber)) ||
-            categoryNumber.length > 2 ||
+            typeof categoryName !== 'string' ||
+            categoryName === '' ||
             foundCategory === null ||
             foundCategory === undefined
         ) {
@@ -206,11 +190,12 @@ router.put('/:productNumber', async (req, res, next) => {
             err.statusCode = 400;
             return next(err);
         }
-        const foundSubCategory = await SubCategory.findOne({ number: Number(subCategoryNumber) }).lean();
-        // 소분류 카테고리가 3자리가 아니거나 숫자값이 아니거나 DB에 존재하지 않는 경우
+
+        const foundSubCategory = await SubCategory.findOne({ name: subCategoryName }).lean();
+        // 소분류 카테고리 이름이 문자열이 아니거나 빈 값이거나 DB에 존재하지 않는 경우
         if (
-            !Number.isInteger(Number(subCategoryNumber)) ||
-            subCategoryNumber.length !== 3 ||
+            typeof subCategoryName !== 'string' ||
+            subCategoryName === '' ||
             foundSubCategory === null ||
             foundSubCategory === undefined
         ) {
@@ -238,12 +223,11 @@ router.put('/:productNumber', async (req, res, next) => {
                 {
                     number: Number(newProductNumber),
                     name,
-                    price: Number(price),
-                    stock: Number(stock),
+                    price,
                     image: filename,
                     information,
-                    categoryNumber: Number(categoryNumber),
-                    subCategoryNumber: Number(subCategoryNumber),
+                    categoryNumber: foundCategory.number,
+                    subCategoryNumber: foundSubCategory.number,
                 }
             );
             return res.status(201).json({ err: null, data: updateData });
@@ -254,11 +238,10 @@ router.put('/:productNumber', async (req, res, next) => {
             {
                 number: Number(newProductNumber),
                 name,
-                price: Number(price),
-                stock: Number(stock),
+                price,
                 information,
-                categoryNumber: Number(categoryNumber),
-                subCategoryNumber: Number(subCategoryNumber),
+                categoryNumber: foundCategory.number,
+                subCategoryNumber: foundSubCategory.number,
             }
         );
         res.status(201).json({ err: null, data: data });
