@@ -1,6 +1,7 @@
 const express = require('express');
 const router = express.Router();
 const { Category, SubCategory, Product } = require('../data');
+const fs = require('fs');
 
 // 대분류 카테고리 추가
 router.post('/', async (req, res, next) => {
@@ -102,17 +103,21 @@ router.delete('/:categoryNumber', async (req, res, next) => {
             err.statusCode = 404;
             return next(err);
         }
-        const subCategories = await SubCategory.find({ mainCategoryNumber: Number(categoryNumber) }).lean();
-        // categoryNumber에 해당하는 카테고리를 삭제
-        for (const subCategory of subCategories) {
-            await Product.deleteMany({ subCategoryNumber: subCategory.number });
-        }
+        // 대분류 카테고리에 속하는 상품들
+        const foundProduct = await Product.find({ categoryNumber: Number(categoryNumber) }).lean();
+        // foundProduct에 속하는 모든 이미지 파일 저장소에서 삭제
+        foundProduct.forEach((product) => {
+            fs.unlinkSync('src/productImages/' + product.image);
+        });
 
-        // 소분류 카테고리 삭제
-        await SubCategory.deleteMany({ mainCategoryNumber: Number(categoryNumber) });
-
-        // 대분류 카테고리 삭제
-        await Category.deleteOne({ number: Number(categoryNumber) });
+        await Promise.all([
+            // 대분류 카테고리에 속하는 상품 삭제
+            Product.deleteMany({ categoryNumber: Number(categoryNumber) }),
+            // 소분류 카테고리 삭제
+            SubCategory.deleteMany({ mainCategoryNumber: Number(categoryNumber) }),
+            // 대분류 카테고리 삭제
+            Category.deleteOne({ number: Number(categoryNumber) }),
+        ]);
 
         return res.status(204).json();
     } catch (e) {
