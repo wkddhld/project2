@@ -1,9 +1,7 @@
 const { User } = require('../data');
 const bcrypt = require('bcrypt');
-const express = require('express');
-const router = express.Router();
 
-router.use('/checkPassword', async (req, res, next) => {
+const checkPasswordMiddleware = async (req, res, next) => {
     try {
         const user = await User.findOne({ email: res.locals.user.email }).lean();
 
@@ -24,10 +22,11 @@ router.use('/checkPassword', async (req, res, next) => {
         }
 
         // 비밀번호가 일치하는 경우
-        res.status(201).json('인증완료');
+        res.locals.body = true;
+        res.status(201).json('비밀번호 재확인 완료');
     } catch (err) {
         next(err);
     }
-});
+};
 
-module.exports = router;
+module.exports = checkPasswordMiddleware;

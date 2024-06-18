@@ -131,7 +131,7 @@ router.put('/', async (req, res, next) => {
         const newJsonToken = jwt.sign(
             { _id: res.locals.user._id, email: data.email, phoneNumber: data.phoneNumber },
             process.env.USER_JWT_SECRET_KEY,
-            { expiresIn: '30m' }
+            { expiresIn: '1h' }
         );
 
         res.status(201)

@@ -206,7 +206,7 @@ router.post('/sign-in', async (req, res, next) => {
         const jwtToken = jwt.sign(
             { _id: foundData._id, email: foundData.email, phoneNumber: foundData.phoneNumber },
             process.env.USER_JWT_SECRET_KEY,
-            { expiresIn: '30m' }
+            { expiresIn: '1h' }
         );
         // 관리자 여부에 따라 쿠키 생성
         if (foundData.isAdmin) {
@@ -259,7 +259,14 @@ router.post('/guest/sign-in', async (req, res, next) => {
             return next(err);
         }
 
-        res.json('주문 조회 성공');
+        // 수정한 데이터를 바탕으로 토큰 새로 만들어줌
+        const token = jwt.sign(
+            { email: foundGuest.email, phoneNumber: foundGuest.phoneNumber },
+            process.env.GUEST_JWT_SECRET_KEY,
+            { expiresIn: '1h' }
+        );
+
+        res.cookie('guestCookies', token, { httpOnly: true, secure: true }).json('인증 성공');
     } catch (e) {
         next(e);
     }
