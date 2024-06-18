@@ -129,8 +129,9 @@ router.post('/', async (req, res, next) => {
             err.statusCode = 400;
             return next(err);
         }
-        // 쿠키가 없으면 비회원
-        if (req.cookies && Object.keys(req.cookies).length === 0) {
+
+        // 쿠키가 없거나 guestCookies 가지고 있으면 비회원
+        if ((req.cookies && Object.keys(req.cookies).length === 0) || req.cookies.guestCookies) {
             // 비밀번호가 숫자값이 아니거나 4자리가 아닌 경우
             if (!Number.isInteger(password) || password.toString().length !== 4) {
                 const err = new Error('비밀번호는 네 자리 숫자값이어야 합니다.');
@@ -179,7 +180,7 @@ router.post('/', async (req, res, next) => {
                     pass: process.env.EMAIL_PASS,
                 },
             });
-            console.log(transporter);
+
             let mailOptions = {
                 from: process.env.EMAIL_USER,
                 to: email,
@@ -189,7 +190,7 @@ router.post('/', async (req, res, next) => {
 
             transporter.sendMail(mailOptions, (error, info) => {
                 if (error) {
-                    return console.log(error);
+                    return console.log(error); // 어떤 에러인가요?  console말고 next로 넘겨줘야할 것 같습니다..!
                 }
             });
 
@@ -203,13 +204,13 @@ router.post('/', async (req, res, next) => {
                     phoneNumber,
                 },
                 process.env.GUEST_JWT_SECRET_KEY,
-                { expiresIn: '30m' }
+                { expiresIn: '1h' }
             );
 
             return res
                 .cookie('guestCookies', token, { httpOnly: true, secure: true })
                 .status(201)
-                .json({ orderNumber: Number(generateNumericOrderNumber()), message: '주문 완료되었습니다.' });
+                .json({ orderNumber: guestOrderData.number, message: '주문 완료되었습니다.' });
         }
         // data를 db에 저장
         const userData = {
