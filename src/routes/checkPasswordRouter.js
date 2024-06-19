@@ -2,6 +2,7 @@ const express = require('express');
 const router = express.Router();
 const { User } = require('../data');
 const bcrypt = require('bcrypt');
+const jwt = require('jsonwebtoken');
 
 router.post('/', async (req, res, next) => {
     try {
@@ -21,9 +22,17 @@ router.post('/', async (req, res, next) => {
             err.statusCode = 401;
             throw err;
         }
+
+        // 비밀번호 재확인 절차를 위한 임시 토큰 발급
+        const token = jwt.sign({ confirm: true }, process.env.CONFIRM_JWT_SECRET_KEY, { expiresIn: '5m' });
+
         // 비밀번호가 일치하는 경우
-        res.json({ err: null, data: { message: '비밀번호 재확인 완료되었습니다.' } });
+        res.cookie('tempCookies', token, { httpOnly: true }).json({
+            err: null,
+            data: { message: '비밀번호 재확인 완료되었습니다.' },
+        });
     } catch (err) {
+        console.error(err);
         next(err);
     }
 });

@@ -4,17 +4,46 @@ const { User } = require('../data');
 const jwt = require('jsonwebtoken');
 const bcrypt = require('bcrypt');
 
+// 토큰확인 함수
+const verifyToken = (token, secretKey) => {
+    try {
+        return jwt.verify(token, secretKey);
+    } catch (e) {
+        if (e.name === 'TokenExpiredError') {
+            const err = new Error('토큰이 만료되었습니다. 다시 로그인 해주세요.');
+            err.statusCode = 401;
+            throw err;
+        }
+        if (e.name === 'JsonWebTokenError') {
+            const err = new Error('유효하지 않거나 손상된 토큰입니다. 다시 로그인 해주세요.');
+            err.statusCode = 401;
+            throw err;
+        }
+        throw e; // 다른 예기치 않은 에러
+    }
+};
+
 // 사용자 정보 조회
 router.get('/', async (req, res, next) => {
     try {
-        // 쿠키의 userID
-        const { adminCookies } = req.cookies;
+        const { adminCookies, tempCookies } = req.cookies;
+
         // 관리자인 경우
         if (adminCookies) {
             const err = new Error('접근 권한이 없습니다.');
             err.statusCode = 403;
             return next(err);
         }
+
+        // 비밀번호 재확인 쿠키가 존재하지 않는 경우
+        if (!tempCookies) {
+            const err = new Error('비밀번호 재확인이 필요합니다.');
+            err.statusCode = 401;
+            return next(err);
+        }
+
+        // 비밀번호 재확인 토큰 확인
+        verifyToken(tempCookies, process.env.CONFIRM_JWT_SECRET_KEY);
 
         const user = await User.findById(res.locals.user._id).lean();
 
@@ -25,6 +54,8 @@ router.get('/', async (req, res, next) => {
             return next(err);
         }
 
+        // 비밀번호 재확인 쿠키 제거
+        res.clearCookie('tempCookies');
         // 4가지 user정보 반환(이름, 이메일, 주소, 전화번호)
         res.json({
             err: null,
