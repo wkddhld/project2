@@ -34,7 +34,7 @@ app.use((err, req, res, next) => {
     // 그렇지 않으면 err.statusCode를 반환
     const statusCode = err.statusCode ?? 500; // 500 이외의 에러는 client의 문제이기 때문에 로그에 남길 필요가 없다. 개발자가 분석을 할 필요가 없기 때문
     if (statusCode === 500) {
-        res.status(500).json({ error: '서버 내부에서 에러가 발생하였습니다. 잠시 후 다시 요청바랍니다.', data: null });
+        res.status(500).json({ err: '서버 내부에서 에러가 발생하였습니다. 잠시 후 다시 요청바랍니다.', data: null });
         return;
     }
     res.status(statusCode).json({ err: err.message, data: null });
