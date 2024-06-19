@@ -60,7 +60,7 @@ router.post('/', async (req, res, next) => {
 router.put('/:subCategoryNumber', async (req, res, next) => {
     try {
         const { subCategoryNumber } = req.params; // URL 파라미터에서 subCategoryNumber 추출
-        const { newSubCategoryNumber, newCategoryNumber, subCategoryName } = req.body; // 요청 본문에서 새로운 subCategoryNumber, subCategoryName 추출
+        const { newSubCategoryNumber , subCategoryName } = req.body; // 요청 본문에서 새로운 subCategoryNumber, subCategoryName 추출
 
         const foundSubCategory = await SubCategory.findOne({ number: Number(subCategoryNumber) }).lean();
         // 소분류 카테고리 번호가 3자리가 아니거나 숫자값이 아니거나 소분류 카테고리 db에 존재하지 않는 경우
@@ -74,22 +74,7 @@ router.put('/:subCategoryNumber', async (req, res, next) => {
             err.statusCode = 404;
             return next(err);
         }
-
-        // 수정하려는 대분류 카테고리 번호가 숫자값이 아니거나 1자리 숫자아닌경우
-        if (!Number.isInteger(newCategoryNumber) || newCategoryNumber.toString().length !== 1) {
-            const err = new Error('대분류 카테고리는 1자리 숫자이어야 합니다.');
-            err.statusCode = 400;
-            return next(err);
-        }
-
-        // 수정하려는 대분류 카테고리 번호가 db에 존재하는지 체크
-        const existingCategory = await Category.findOne({ number: newCategoryNumber }).lean();
-        if (existingCategory === null || existingCategory === undefined) {
-            const err = new Error('존재하지 않는 대분류 카테고리입니다.');
-            err.statusCode = 400;
-            return next(err);
-        }
-
+      
         // 수정하려는 소분류 카테고리 번호가 숫자값이 아니거나 3자리가 아닐 경우
         if (!Number.isInteger(newSubCategoryNumber) || newSubCategoryNumber.toString().length !== 3) {
             const err = new Error('소분류 카테고리는 3자리 숫자이어야 합니다.');
@@ -112,15 +97,13 @@ router.put('/:subCategoryNumber', async (req, res, next) => {
             err.statusCode = 400;
             return next(err);
         }
-        
+
         // 수정된 소분류 카테고리 정보 업데이트
         await SubCategory.updateOne(
             { number: Number(subCategoryNumber) },
-            {
-                number: newSubCategoryNumber,
+            {  number: newSubCategoryNumber,
                 name: subCategoryName,
-                mainCategoryNumber: newCategoryNumber,
-            },
+               },
             { new: true } // 업데이트된 문서를 반환하도록 설정
         );
 
@@ -129,7 +112,6 @@ router.put('/:subCategoryNumber', async (req, res, next) => {
             data: {
                 subCategoryName: subCategoryName,
                 subCategoryNumber: newSubCategoryNumber,
-                mainCategoryNumber: newCategoryNumber,
             },
         });
     } catch (e) {

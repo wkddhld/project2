@@ -1,6 +1,6 @@
 const express = require('express');
 const router = express.Router();
-const { Order, Guest } = require('../data');
+const { Order, Guest, User } = require('../data');
 const { customAlphabet } = require('nanoid');
 const jwt = require('jsonwebtoken');
 const bcrypt = require('bcrypt');
@@ -132,9 +132,17 @@ router.post('/', async (req, res, next) => {
 
         // 쿠키가 없거나 guestCookies 가지고 있으면 비회원
         if ((req.cookies && Object.keys(req.cookies).length === 0) || req.cookies.guestCookies) {
+            // 주문 작성 시 입력한 이메일이 회원 db에 존재하는 경우
+            const foundEmail = await User.findOne({ email }).lean();
+            if (foundEmail !== null) {
+                const err = new Error('이미 존재하는 이메일입니다.');
+                err.statusCode = 400;
+                return next(err);
+            }
+
             // 비밀번호가 숫자값이 아니거나 4자리가 아닌 경우
-            if (!Number.isInteger(password) || password.toString().length !== 4) {
-                const err = new Error('비밀번호는 4자리 숫자이어야 합니다.');
+            if (password.length !== 4 || password.search(/^\d{4}$/)) {
+                const err = new Error('비밀번호는 4자리 숫자입니다.');
                 err.statusCode = 400;
                 return next(err);
             }
@@ -206,7 +214,7 @@ router.post('/', async (req, res, next) => {
             return res
                 .cookie('guestCookies', token, { httpOnly: true, secure: true })
                 .status(201)
-                .json({ orderNumber: guestOrderData.number, message: '주문 완료되었습니다.' });
+                .json({ err: null, data: { orderNumber: guestOrderData.number, message: '주문 완료되었습니다.' } });
         }
         // data를 db에 저장
         const userData = {
@@ -281,8 +289,8 @@ router.put('/:orderNumber', async (req, res, next) => {
                     }
 
                     result = await Order.updateOne({ number: Number(orderNumber) }, { orderState: '주문취소' });
+
                     break; // 주문을 찾았으므로 반복 중단
-                    
                 } catch (error) {
                     next(err);
                 }
