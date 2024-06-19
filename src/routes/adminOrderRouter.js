@@ -12,7 +12,7 @@ router.get('/', async (req, res, next) => {
             return next(err);
         }
 
-        res.json({ error: null, data: orders });
+        res.json({ err: null, data: orders });
     } catch (e) {
         next(e);
     }
@@ -49,7 +49,7 @@ router.put('/:orderNumber', async (req, res, next) => {
         // 비회원의 주문을 배송완료로 변경 시 user 정보 db에서 삭제
         await Order.updateOne({ number: Number(orderNumber) }, { orderState }, { new: true });
 
-        res.status(201).json({ error: null, data: { orderState, message: '주문 상태가 정상적으로 변경되었습니다.' } });
+        res.status(201).json({ err: null, data: { orderState, message: '주문 상태가 정상적으로 변경되었습니다.' } });
     } catch (e) {
         next(e);
     }
