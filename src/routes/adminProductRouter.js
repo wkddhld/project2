@@ -143,6 +143,7 @@ router.post('/', upload.single('file'), async (req, res, next) => {
     }
 });
 
+
 // 상품 수정
 router.put('/:productNumber', upload.single('file'), async (req, res, next) => {
     try {
