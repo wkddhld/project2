@@ -3,22 +3,21 @@ const router = express.Router();
 const { Category, SubCategory, Product } = require('../data');
 const fs = require('fs');
 
-
 // 대분류 카테고리 추가
 router.post('/', async (req, res, next) => {
     try {
         const { categoryNumber, categoryName } = req.body; // 요청 본문에서 categoryNum과 categoryName 추출
-        // 추가하려는 대분류 카테고리 이름이 DB에 존재할 경우
-        const existingCategoryName = await Category.findOne({ name: categoryName }).lean();
-        if (existingCategoryName !== null) {
-            const err = new Error('이미 존재하는 카테고리 이름 입니다.');
+
+        // 추가하려는 대분류 카테고리 번호가 1자리 숫자가 아닌 경우
+        if (!Number.isInteger(categoryNumber) || categoryNumber.toString().length !== 1) {
+            const err = new Error('대분류 카테고리는 1자리 숫자이어야 합니다.');
             err.statusCode = 400;
             return next(err);
         }
- 
-        // 추가하려는 대분류 카테고리 번호가 2자리 초과이거나 숫자값이 아닌 경우
-        if (!Number.isInteger(categoryNumber) || categoryNumber.toString().length > 2) {
-            const err = new Error('대분류 카테고리는 2자리 이하의 숫자이어야 합니다.');
+
+        // 대분류 카테고리 이름이 문자열이 아니거나 빈 값인 경우
+        if (typeof categoryName !== 'string' || categoryName === '') {
+            const err = new Error('대분류 카테고리 이름은 문자열이며 빈 값이 아니어야 합니다.');
             err.statusCode = 400;
             return next(err);
         }
@@ -27,6 +26,14 @@ router.post('/', async (req, res, next) => {
         const existingCategory = await Category.findOne({ number: categoryNumber }).lean();
         if (existingCategory !== null) {
             const err = new Error('이미 존재하는 대분류 카테고리입니다.');
+            err.statusCode = 400;
+            return next(err);
+        }
+
+        // 추가하려는 대분류 카테고리 이름이 DB에 존재할 경우
+        const existingCategoryName = await Category.findOne({ name: categoryName }).lean();
+        if (existingCategoryName !== null) {
+            const err = new Error('이미 존재하는 대분류 카테고리 이름 입니다.');
             err.statusCode = 400;
             return next(err);
         }
@@ -48,13 +55,13 @@ router.post('/', async (req, res, next) => {
 router.put('/:categoryNumber', async (req, res, next) => {
     try {
         const { categoryNumber } = req.params; // URL 파라미터에서 categoryNum 추출
-        const { newCategoryNumber, categoryName } = req.body; // 요청 본문에서 새로운 categoryNum과 categoryName 추출
+        const { categoryName } = req.body; // 요청 본문에서 새로운 categoryName 추출
 
         const foundCategory = await Category.findOne({ number: Number(categoryNumber) }).lean();
-        // categoryNumber가 2자리 초과이거나 숫자값이 아니거나 카테고리 db에 존재하지 않는 경우
+        // params로 받은 대분류 카테고리 번호가 1자리 숫자가 아니거나 카테고리 db에 존재하지 않는 경우
         if (
             !Number.isInteger(Number(categoryNumber)) ||
-            categoryNumber.length > 2 ||
+            categoryNumber.length !== 1 ||
             foundCategory === null ||
             foundCategory === undefined
         ) {
@@ -63,17 +70,10 @@ router.put('/:categoryNumber', async (req, res, next) => {
             return next(err);
         }
 
-        // 수정하려는 대분류 카테고리 번호가 2자리 초과이거나 숫자값이 아닌 경우
-        if (!Number.isInteger(newCategoryNumber) || newCategoryNumber.toString().length > 2) {
-            const err = new Error('대분류 카테고리는 2자리 이하의 숫자이어야 합니다.');
-            err.statusCode = 400;
-            return next(err);
-        }
-
-        const existingCategory = await Category.findOne({ number: newCategoryNumber });
-        // 새로운 카테고리 번호가 현재 카테고리 번호와 다르고 수정하려는 카테고리 번호가 db에 존재하는 경우
-        if (newCategoryNumber !== Number(categoryNumber) && existingCategory !== null) {
-            const err = new Error('대분류 카테고리 번호를 변경할 수 없습니다.');
+        // 수정하려는 대분류 카테고리 이름과 동일한 대분류 카테고리 이름을 가진 카테고리가 DB에 존재하는지 확인
+        const existingCategoryName = await Category.findOne({ name: categoryName }).lean();
+        if (existingCategoryName !== null) {
+            const err = new Error('이미 존재하는 대분류 카테고리 이름입니다.');
             err.statusCode = 400;
             return next(err);
         }
@@ -81,13 +81,13 @@ router.put('/:categoryNumber', async (req, res, next) => {
         // categoryNumber에 해당하는 카테고리를  업데이트
         await Category.updateOne(
             { number: Number(categoryNumber) },
-            { number: newCategoryNumber, name: categoryName },
+            { name: categoryName },
             { new: true } // 업데이트된 문서를 반환하도록 설정
         );
 
         return res.status(201).json({
             err: null,
-            data: { categoryName, categoryNumber: newCategoryNumber },
+            data: { categoryNumber: Number(categoryNumber), categoryName },
         });
     } catch (e) {
         next(e);
