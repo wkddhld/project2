@@ -72,7 +72,7 @@ router.post('/', upload.single('file'), async (req, res, next) => {
         }
 
         // 상품명이 String type이 아니거나 빈 값일 경우 에러 핸들러로 에러 보냄
-        if (typeof name !== 'string' || name === '') {
+        if (typeof name !== 'string' || name === '' || name.trim() === '') {
             const err = new Error('상품명은 문자열 값이며 빈 값이 아니어야 합니다.');
             err.statusCode = 400;
             return next(err);
@@ -90,6 +90,7 @@ router.post('/', upload.single('file'), async (req, res, next) => {
         if (
             typeof categoryName !== 'string' ||
             categoryName === '' ||
+            categoryName.trim() === '' ||
             foundCategory === null ||
             foundCategory === undefined
         ) {
@@ -97,11 +98,13 @@ router.post('/', upload.single('file'), async (req, res, next) => {
             err.statusCode = 400;
             return next(err);
         }
-        const foundSubCategory = await SubCategory.findOne({ name: subCategoryName }).lean();
+
         // 소분류 카테고리 이름이 문자열이 아니거나 빈 값이 아니거나 DB에 존재하지 않는 경우
+        const foundSubCategory = await SubCategory.findOne({ name: subCategoryName }).lean();
         if (
             typeof subCategoryName !== 'string' ||
             subCategoryName === '' ||
+            subCategoryName.trim() === '' ||
             foundSubCategory === null ||
             foundSubCategory === undefined
         ) {
@@ -112,7 +115,6 @@ router.post('/', upload.single('file'), async (req, res, next) => {
 
         // 상품 번호(업로드한 날짜 + 랜덤 4자리 숫자)
         const productNumber = Date.now() + generateNumericOrderNumber();
-
         // 상품 정보 db에 저장
         const data = await Product.create({
             number: Number(productNumber),
@@ -165,7 +167,7 @@ router.put('/:productNumber', upload.single('file'), async (req, res, next) => {
         }
 
         // 상품명이 String type이 아니거나 빈 값일 경우 에러 핸들러로 에러 보냄
-        if (typeof name !== 'string' || name === '') {
+        if (typeof name !== 'string' || name === '' || name.trim() === '') {
             const err = new Error('상품명은 문자열이며 빈 값이 아니어야 합니다.');
             err.statusCode = 400;
             return next(err);
@@ -178,11 +180,12 @@ router.put('/:productNumber', upload.single('file'), async (req, res, next) => {
             return next(err);
         }
 
-        const foundCategory = await Category.findOne({ name: categoryName }).lean();
         // 대분류 카테고리 이름이 문자열이 아니거나 빈 값이거나 DB에 존재하지 않는 경우
+        const foundCategory = await Category.findOne({ name: categoryName }).lean();
         if (
             typeof categoryName !== 'string' ||
             categoryName === '' ||
+            categoryName.trim() === '' ||
             foundCategory === null ||
             foundCategory === undefined
         ) {
@@ -191,11 +194,12 @@ router.put('/:productNumber', upload.single('file'), async (req, res, next) => {
             return next(err);
         }
 
-        const foundSubCategory = await SubCategory.findOne({ name: subCategoryName }).lean();
         // 소분류 카테고리 이름이 문자열이 아니거나 빈 값이거나 DB에 존재하지 않는 경우
+        const foundSubCategory = await SubCategory.findOne({ name: subCategoryName }).lean();
         if (
             typeof subCategoryName !== 'string' ||
             subCategoryName === '' ||
+            subCategoryName.trim() === '' ||
             foundSubCategory === null ||
             foundSubCategory === undefined
         ) {
@@ -204,11 +208,7 @@ router.put('/:productNumber', upload.single('file'), async (req, res, next) => {
             return next(err);
         }
 
-        // 새로운 상품 번호 생성
-        const newProductNumber = Date.now() + generateNumericOrderNumber();
-
         // 요청하는 데이터에 이미지 파일이 존재하는 경우
-
         if (req.file) {
             const filename = req.file.fieldname + '-' + req.file.originalname;
 
@@ -230,8 +230,10 @@ router.put('/:productNumber', upload.single('file'), async (req, res, next) => {
                     subCategoryNumber: foundSubCategory.number,
                 }
             );
+
             return res.status(201).json({ err: null, data: updateData });
         }
+
         // 상품 업데이트
         const data = await Product.updateOne(
             { number: Number(productNumber) },
@@ -244,6 +246,14 @@ router.put('/:productNumber', upload.single('file'), async (req, res, next) => {
                 subCategoryNumber: foundSubCategory.number,
             }
         );
+
+        // update가 제대로 이루어졌는지 확인하는 코드
+        if (data.modifiedCount === 0) {
+            const err = new Error('업데이트 하려는 상품을 찾을 수 없습니다.');
+            err.statusCode = 404;
+            return next(err);
+        }
+
         res.status(201).json({ err: null, data: data });
     } catch (e) {
         next(e);
@@ -254,16 +264,9 @@ router.put('/:productNumber', upload.single('file'), async (req, res, next) => {
 router.delete('/:productNumber', async (req, res, next) => {
     const { productNumber } = req.params;
 
-    // productNumber가 숫자값이 아닌 경우
-    if (!Number.isInteger(Number(productNumber))) {
-        const err = new Error('요청하는 상품을 찾을 수 없습니다.');
-        err.statusCode = 404;
-        return next(err);
-    }
-
-    // productNumber에 해당하는 상품이 없을 경우
+    // productNumber가 숫자가 아니거나 DB에 해당 상품이 없을 경우
     const foundData = await Product.findOne({ number: Number(productNumber) }).lean();
-    if (foundData === null || foundData === undefined) {
+    if (!Number.isInteger(Number(productNumber)) || foundData === null || foundData === undefined) {
         const err = new Error('요청하는 상품을 찾을 수 없습니다.');
         err.statusCode = 404;
         return next(err);

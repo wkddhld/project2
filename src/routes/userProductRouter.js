@@ -9,10 +9,10 @@ router.get('/:categoryNumber', async (req, res, next) => {
 
         const foundCategory = await Category.findOne({ number: Number(categoryNumber) }).lean();
 
-        // categoryNumber가 2자리 초과이거나 숫자값이 아니거나 카테고리 db에 존재하지 않는 경우
+        // categoryNumber가 1자리 숫자가 아니거나 카테고리 db에 존재하지 않는 경우
         if (
             !Number.isInteger(Number(categoryNumber)) ||
-            categoryNumber.length > 2 ||
+            categoryNumber.length !== 1 ||
             foundCategory === null ||
             foundCategory === undefined
         ) {
@@ -23,13 +23,6 @@ router.get('/:categoryNumber', async (req, res, next) => {
 
         // categoryNumber에 해당하는 상품 조회
         const categoryProducts = await Product.find({ categoryNumber: Number(categoryNumber) }).lean();
-
-        // 해당 카테고리의 상품이 없는 경우
-        if (!categoryProducts || categoryProducts.length === 0) {
-            const err = new Error('해당 대분류 카테고리의 상품을 찾을 수 없습니다.');
-            err.statusCode = 404;
-            return next(err);
-        }
 
         // 상품 데이터 반환
         return res.json({
@@ -53,10 +46,10 @@ router.get('/:categoryNumber/:subCategoryNumber', async (req, res, next) => {
 
         const foundCategory = await Category.findOne({ number: Number(categoryNumber) }).lean();
 
-        // categoryNumber가 2자리 초과이거나 숫자값이 아니거나 카테고리 db에 존재하지 않는 경우
+        // categoryNumber가 1자리 숫자가 아니거나 카테고리 db에 존재하지 않는 경우
         if (
             !Number.isInteger(Number(categoryNumber)) ||
-            categoryNumber.length > 2 ||
+            categoryNumber.length !== 1 ||
             foundCategory === null ||
             foundCategory === undefined
         ) {
@@ -66,7 +59,7 @@ router.get('/:categoryNumber/:subCategoryNumber', async (req, res, next) => {
         }
 
         const foundSubCategory = await SubCategory.findOne({ number: Number(subCategoryNumber) }).lean();
-        // 소분류 카테고리가 3자리가 아니거나 숫자값이 아니거나 소분류 카테고리 DB에 존재하지 않는 경우
+        // 소분류 카테고리가 3자리 숫자가 아니거나 소분류 카테고리 DB에 존재하지 않는 경우
         if (
             !Number.isInteger(Number(subCategoryNumber)) ||
             subCategoryNumber.length !== 3 ||

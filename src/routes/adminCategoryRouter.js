@@ -16,7 +16,7 @@ router.post('/', async (req, res, next) => {
         }
 
         // 대분류 카테고리 이름이 문자열이 아니거나 빈 값인 경우
-        if (typeof categoryName !== 'string' || categoryName === '') {
+        if (typeof categoryName !== 'string' || categoryName === '' || categoryName.trim() === '') {
             const err = new Error('대분류 카테고리 이름은 문자열이며 빈 값이 아니어야 합니다.');
             err.statusCode = 400;
             return next(err);
@@ -25,7 +25,7 @@ router.post('/', async (req, res, next) => {
         // 동일한 categoryNumber을 가진 카테고리가 이미 존재하는지 확인
         const existingCategory = await Category.findOne({ number: categoryNumber }).lean();
         if (existingCategory !== null) {
-            const err = new Error('이미 존재하는 대분류 카테고리입니다.');
+            const err = new Error('이미 존재하는 대분류 카테고리 번호입니다.');
             err.statusCode = 400;
             return next(err);
         }
@@ -70,7 +70,8 @@ router.put('/:categoryNumber', async (req, res, next) => {
             return next(err);
         }
 
-        if (typeof categoryName !== 'string' || categoryName === '') {
+        // 대분류 카테고리 이름이 문자열이 아니거나 빈 값인 경우
+        if (typeof categoryName !== 'string' || categoryName === '' || categoryName.trim() === '') {
             const err = new Error('대분류 카테고리 이름은 문자열이면서 빈 값이 아니어야 합니다.');
             err.statusCode = 400;
             return next(err);
@@ -106,7 +107,7 @@ router.delete('/:categoryNumber', async (req, res, next) => {
         const { categoryNumber } = req.params; // URL 파라미터에서 categoryNumber 추출
 
         const foundCategory = await Category.findOne({ number: Number(categoryNumber) }).lean();
-        // categoryNumber가 2자리 초과이거나 숫자값이 아니거나 카테고리 db에 존재하지 않는 경우
+        // categoryNumber가 1자리 숫자가 아니거나 카테고리 db에 존재하지 않는 경우
         if (
             !Number.isInteger(Number(categoryNumber)) ||
             categoryNumber.length > 2 ||
@@ -117,6 +118,7 @@ router.delete('/:categoryNumber', async (req, res, next) => {
             err.statusCode = 404;
             return next(err);
         }
+
         // 대분류 카테고리에 속하는 상품들
         const foundProduct = await Product.find({ categoryNumber: Number(categoryNumber) }).lean();
         // foundProduct에 속하는 모든 이미지 파일 저장소에서 삭제

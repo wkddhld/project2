@@ -7,9 +7,7 @@ router.get('/', async (req, res, next) => {
     try {
         const orders = await Order.find().lean();
         if (orders.length === 0) {
-            const err = new Error('주문을 찾을 수 없습니다.');
-            err.statusCode = 404;
-            return next(err);
+            res.json({ err: null, data: { message: '주문이 존재하지 않습니다.' } });
         }
 
         res.json({ err: null, data: orders });
@@ -29,6 +27,13 @@ router.put('/:orderNumber', async (req, res, next) => {
         if (order === null || order === undefined) {
             const err = new Error('존재하지 않는 주문입니다.');
             err.statusCode = 404;
+            return next(err);
+        }
+
+        // 수정하려는 주문 상태가 주문취소나 배송완료가 아닌 경우
+        if (!(orderState === '주문취소' || orderState === '배송완료')) {
+            const err = new Error('올바른 주문 상태가 아닙니다.');
+            err.statusCode = 400;
             return next(err);
         }
 

@@ -56,6 +56,7 @@ router.get('/', async (req, res, next) => {
 
         // 비밀번호 재확인 쿠키 제거
         res.clearCookie('tempCookies');
+
         // 4가지 user정보 반환(이름, 이메일, 주소, 전화번호)
         res.json({
             err: null,
@@ -91,8 +92,8 @@ router.put('/', async (req, res, next) => {
         }
 
         // name이 string type이 아니거나 빈 값일 경우
-        if (typeof name !== 'string' || name === '') {
-            const err = new Error('이름은 문자열 값이며 빈 값이 아니어야 합니다.');
+        if (typeof name !== 'string' || name === '' || name.trim() === '') {
+            const err = new Error('이름은 문자열이며 빈 값이 아니어야 합니다.');
             err.statusCode = 400;
             return next(err);
         }
@@ -115,7 +116,7 @@ router.put('/', async (req, res, next) => {
         }
 
         // phoneNumber가 string type이 아니거나 빈 값일 경우
-        if (typeof phoneNumber !== 'string' || phoneNumber === '') {
+        if (typeof phoneNumber !== 'string' || phoneNumber === '' || phoneNumber.trim() === '') {
             const err = new Error('전화번호는 문자열이며 빈 값이 아니어야 합니다.');
             err.statusCode = 400;
             return next(err);
@@ -125,10 +126,13 @@ router.put('/', async (req, res, next) => {
         if (
             typeof postNumber !== 'string' ||
             postNumber === '' ||
+            postNumber.trim() === '' ||
             typeof address !== 'string' ||
             address === '' ||
+            address.trim() === '' ||
             typeof detailAddress !== 'string' ||
-            detailAddress === ''
+            detailAddress === '' ||
+            detailAddress.trim() === ''
         ) {
             const err = new Error('주소는 문자열이며 빈 값이 아니어야 합니다.');
             err.statusCode = 400;
@@ -148,14 +152,7 @@ router.put('/', async (req, res, next) => {
         };
 
         // DB에 데이터 저장
-        const result = await User.updateOne({ _id: res.locals.user._id }, data);
-
-        // update가 제대로 이루어졌는지 확인하는 코드
-        if (result.modifiedCount === 0) {
-            const err = new Error('존재하지 않는 회원입니다.');
-            err.statusCode = 404;
-            return next(err);
-        }
+        await User.updateOne({ _id: res.locals.user._id }, data);
 
         // 수정한 데이터를 바탕으로 토큰 새로 만들어줌
         const newJsonToken = jwt.sign(
@@ -191,7 +188,7 @@ router.put('/withdrawal', async (req, res, next) => {
         // decode해서 얻은 payload에서 _id로 해당 유저 찾음
         const user = await User.findById(res.locals.user._id).lean();
 
-        if (!user) {
+        if (user === null || user === undefined) {
             const err = new Error('유저를 찾을 수 없습니다.');
             err.statusCode = 404;
             return next(err);

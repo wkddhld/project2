@@ -8,28 +8,18 @@ const { isAuthenticatedMiddleware } = require('../middlewares');
 // 회원가입 api
 router.post('/sign-up', async (req, res, next) => {
     try {
-        const {
-            name,
-            email,
-            password,
-            confirmPassword,
-            phoneNumber,
-            postNumber,
-            address,
-            detailAddress,
-            agreement,
-            isEmailCheck,
-        } = req.body;
+        const { name, email, password, confirmPassword, phoneNumber, postNumber, address, detailAddress, agreement } =
+            req.body;
 
         // name이 string type이 아니거나 빈 값일 경우 에러 핸들러로 에러 넘김
-        if (typeof name !== 'string' || name === '') {
+        if (typeof name !== 'string' || name === '' || name.trim() === '') {
             const err = new Error('이름은 문자열이며 빈 값이 아니어야 합니다.');
             err.statusCode = 400;
             return next(err);
         }
 
         // email이 string type이 아니거나 빈 값일 경우
-        if (typeof email !== 'string' || email === '') {
+        if (typeof email !== 'string' || email === '' || email.trim() === '') {
             const err = new Error('이메일은 문자열이며 빈 값이 아니어야 합니다.');
             err.statusCode = 400;
             return next(err);
@@ -77,7 +67,7 @@ router.post('/sign-up', async (req, res, next) => {
         }
 
         // phoneNumber가 string type이 아니거나 빈 값일 경우
-        if (typeof phoneNumber !== 'string' || phoneNumber === '') {
+        if (typeof phoneNumber !== 'string' || phoneNumber === '' || phoneNumber.trim() === '') {
             const err = new Error('전화번호는 문자열이며 빈 값이 아니어야 합니다.');
             err.statusCode = 400;
             return next(err);
@@ -87,10 +77,13 @@ router.post('/sign-up', async (req, res, next) => {
         if (
             typeof postNumber !== 'string' ||
             postNumber === '' ||
+            postNumber.trim() === '' ||
             typeof address !== 'string' ||
             address === '' ||
+            address.trim() === '' ||
             typeof detailAddress !== 'string' ||
-            detailAddress === ''
+            detailAddress === '' ||
+            detailAddress.trim() === ''
         ) {
             const err = new Error('주소는 문자열이며 빈 값이 아니어야 합니다.');
             err.statusCode = 400;
@@ -135,7 +128,7 @@ router.post('/sign-up/check-email', async (req, res, next) => {
         const { email } = req.body;
 
         // email이 string type이 아니거나 빈 값일 경우
-        if (typeof email !== 'string' || email === '') {
+        if (typeof email !== 'string' || email === '' || email.trim() === '') {
             const err = new Error('이메일은 문자열이거나 빈 값이 아니어야 합니다.');
             err.statusCode = 400;
             return next(err);
@@ -157,8 +150,8 @@ router.post('/sign-up/check-email', async (req, res, next) => {
             err.statusCode = 400;
             return next(err); // 매우 중요.  return 해주지 않을 경우 response가 간 다음에도 이후 코드들이 실행됨
         }
-        // isEmailCheck : 이메일 중복체크 여부 확인하기 위한 변수
-        res.json({ err: null, data: { email, isEmailCheck: true } });
+
+        res.json({ err: null, data: email });
     } catch (e) {
         next(e);
     }
@@ -170,7 +163,7 @@ router.post('/sign-in', async (req, res, next) => {
         const { email, password } = req.body;
 
         // 이메일이 string 값이 아니거나 빈 값일 때
-        if (typeof email !== 'string' || email === '') {
+        if (typeof email !== 'string' || email === '' || email.trim() === '') {
             const err = new Error('이메일은 문자열이며 빈 값이 될 수 없습니다.');
             err.statusCode = 400;
             return next(err);
@@ -184,7 +177,7 @@ router.post('/sign-in', async (req, res, next) => {
         }
 
         // 비밀번호가 string 값이 아니거나 빈 값일 때
-        if (typeof password !== 'string' || password === '') {
+        if (typeof password !== 'string' || password === '' || password.trim() === '') {
             const err = new Error('비밀번호는 문자열이며 빈 값이 될 수 없습니다.');
             err.statusCode = 400;
             return next(err);
@@ -192,7 +185,6 @@ router.post('/sign-in', async (req, res, next) => {
 
         // req.body로 받은 email이 DB에 저장된 email과 일치하는 데이터 하나만 찾음
         const foundData = await User.findOne({ email }).lean();
-
         if (foundData === null) {
             const err = new Error('이메일이나 비밀번호가 일치하지 않습니다.');
             err.statusCode = 400;
@@ -249,7 +241,8 @@ router.post('/guest/sign-in', async (req, res, next) => {
             return next(err);
         }
 
-        if (!Number.isInteger(Number(password)) || password.length !== 4) {
+        // 비밀번호가 4자리 숫자가 아닌 경우
+        if (password.length !== 4 || password.search(/^\d{4}$/)) {
             const err = new Error('비밀번호는 4자리 숫자이어야 합니다.');
             err.statusCode = 400;
             return next(err);

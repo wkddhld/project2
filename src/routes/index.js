@@ -24,6 +24,6 @@ apiRouter.use('/admin/orders', isAuthenticatedAdminMiddleware, adminOrderRouter)
 apiRouter.use('/products', userProductRouter);
 apiRouter.use('/orders', userOrderRouter);
 apiRouter.use('/product', userDetailProductRouter);
-apiRouter.use('/Info', isAuthenticatedMiddleware, userInfoRouter);
+apiRouter.use('/info', isAuthenticatedMiddleware, userInfoRouter);
 
 module.exports = apiRouter;
