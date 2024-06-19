@@ -1,7 +1,9 @@
+const express = require('express');
+const router = express.Router();
 const { User } = require('../data');
 const bcrypt = require('bcrypt');
 
-const checkPasswordMiddleware = async (req, res, next) => {
+router.post('/', async (req, res, next) => {
     try {
         const user = await User.findOne({ email: res.locals.user.email }).lean();
 
@@ -11,21 +13,21 @@ const checkPasswordMiddleware = async (req, res, next) => {
             err.statusCode = 401;
             throw err;
         }
-
+        console.log(req.body.password);
+        console.log(user.password);
         const isPasswordCorrect = await bcrypt.compare(req.body.password, user.password);
 
         // 비밀번호가 일치하지 않는 경우
-        if (!isPasswordCorrect) {
+        if (isPasswordCorrect === false) {
             const err = new Error('비밀번호가 일치하지 않습니다. 비밀번호를 다시 입력해주세요.');
             err.statusCode = 401;
             throw err;
         }
-
         // 비밀번호가 일치하는 경우
-        res.json({ err: null, data: { message: '비밀번호 재확인 완료' } });
+        res.json({ error: null, data: { message: '비밀번호 재확인 완료되었습니다.' } });
     } catch (err) {
         next(err);
     }
-};
+});
 
-module.exports = checkPasswordMiddleware;
+module.exports = router;
