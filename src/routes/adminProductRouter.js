@@ -62,7 +62,7 @@ router.get('/', async (req, res, next) => {
 router.post('/', upload.single('file'), async (req, res, next) => {
     try {
         // 텍스트 데이터들은 req.body로 받음
-        const { name, price, stock, information, origin, categoryNumber, subCategoryNumber } = req.body;
+        const { name, price, information, origin, categoryName, subCategoryName } = req.body;
 
         // 파일이 없을 경우 에러처리
         if (!req.file) {
@@ -113,7 +113,6 @@ router.post('/', upload.single('file'), async (req, res, next) => {
         // 상품 번호(업로드한 날짜 + 랜덤 4자리 숫자)
         const productNumber = Date.now() + generateNumericOrderNumber();
 
-
         // 상품 정보 db에 저장
         const data = await Product.create({
             number: Number(productNumber),
@@ -125,7 +124,6 @@ router.post('/', upload.single('file'), async (req, res, next) => {
             categoryNumber: foundCategory.number,
             subCategoryNumber: foundSubCategory.number,
         });
-        
 
         res.status(201).json({
             err: null,
@@ -144,6 +142,7 @@ router.post('/', upload.single('file'), async (req, res, next) => {
         next(e);
     }
 });
+
 
 // 상품 수정
 router.put('/:productNumber', upload.single('file'), async (req, res, next) => {

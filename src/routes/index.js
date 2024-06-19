@@ -9,6 +9,7 @@ const userProductRouter = require('./userProductRouter');
 const userOrderRouter = require('./userOrderRouter');
 const userDetailProductRouter = require('./userDetailProductRouter');
 const adminOrderRouter = require('./adminOrderRouter');
+const userInfoRouter = require("./userInfoRouter");
 const {
     isAuthenticatedMiddleware,
     isAuthenticatedAdminMiddleware,
@@ -25,5 +26,6 @@ apiRouter.use('/admin/orders', isAuthenticatedAdminMiddleware, adminOrderRouter)
 apiRouter.use('/products', userProductRouter);
 apiRouter.use('/orders', userOrderRouter);
 apiRouter.use('/product', userDetailProductRouter);
+apiRouter.use('/Info',isAuthenticatedMiddleware, userInfoRouter);
 
 module.exports = apiRouter;
