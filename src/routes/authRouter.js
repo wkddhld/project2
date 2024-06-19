@@ -222,13 +222,12 @@ router.post('/sign-in', async (req, res, next) => {
         if (foundData.isAdmin) {
             // 쿠키에 토큰 담아서 보냄
             return res
-                .cookie('adminCookies', jwtToken, { httpOnly: true, secure: true })
+                .cookie('adminCookies', jwtToken, { httpOnly: true })
                 .json({ err: null, data: { isAdmin: true, message: '로그인에 성공하셨습니다. 환영합니다.' } });
         } else {
             return res
                 .cookie('userCookies', jwtToken, {
                     httpOnly: true,
-                    secure: true,
                 })
                 .json({ err: null, data: { isAdmin: false, message: '로그인에 성공하셨습니다. 환영합니다.' } });
         }
@@ -277,7 +276,7 @@ router.post('/guest/sign-in', async (req, res, next) => {
             { expiresIn: '1h' }
         );
 
-        res.cookie('guestCookies', token, { httpOnly: true, secure: true }).json({
+        res.cookie('guestCookies', token, { httpOnly: true }).json({
             err: null,
             message: '인증 성공하였습니다.',
         });
