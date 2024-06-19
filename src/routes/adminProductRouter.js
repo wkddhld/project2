@@ -51,7 +51,7 @@ router.get('/', async (req, res, next) => {
             subCategoryName: prod.subCategory[0].name,
         }));
 
-        res.json({ error: null, data: product });
+        res.json({ err: null, data: product });
     } catch (e) {
         next(e);
     }
@@ -142,7 +142,6 @@ router.post('/', upload.single('file'), async (req, res, next) => {
         next(e);
     }
 });
-
 
 // 상품 수정
 router.put('/:productNumber', upload.single('file'), async (req, res, next) => {

@@ -75,6 +75,12 @@ router.put('/:subCategoryNumber', async (req, res, next) => {
             return next(err);
         }
 
+        if (typeof subCategoryName !== 'string' || subCategoryName === '') {
+            const err = new Error('소분류 카테고리 이름은 문자열이면서 빈 값이 아니어야 합니다.');
+            err.statusCode = 400;
+            return next(err);
+        }
+
         // 수정하려는 소분류 카테고리 이름이 DB에 존재할 경우
         const existingSubCategoryByName = await SubCategory.findOne({ name: subCategoryName }).lean();
         if (existingSubCategoryByName) {
@@ -83,12 +89,8 @@ router.put('/:subCategoryNumber', async (req, res, next) => {
             return next(err);
         }
 
-
         // 수정된 소분류 카테고리 정보 업데이트
-        await SubCategory.updateOne(
-            { number: Number(subCategoryNumber) },
-            { name: subCategoryName }
-        );
+        await SubCategory.updateOne({ number: Number(subCategoryNumber) }, { name: subCategoryName });
 
         return res.status(200).json({
             err: null,

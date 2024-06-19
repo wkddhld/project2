@@ -70,6 +70,12 @@ router.put('/:categoryNumber', async (req, res, next) => {
             return next(err);
         }
 
+        if (typeof categoryName !== 'string' || categoryName === '') {
+            const err = new Error('대분류 카테고리 이름은 문자열이면서 빈 값이 아니어야 합니다.');
+            err.statusCode = 400;
+            return next(err);
+        }
+
         // 수정하려는 대분류 카테고리 이름과 동일한 대분류 카테고리 이름을 가진 카테고리가 DB에 존재하는지 확인
         const existingCategoryName = await Category.findOne({ name: categoryName }).lean();
         if (existingCategoryName !== null) {

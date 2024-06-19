@@ -22,7 +22,7 @@ router.post('/', async (req, res, next) => {
             throw err;
         }
         // 비밀번호가 일치하는 경우
-        res.json({ error: null, data: { message: '비밀번호 재확인 완료되었습니다.' } });
+        res.json({ err: null, data: { message: '비밀번호 재확인 완료되었습니다.' } });
     } catch (err) {
         next(err);
     }
