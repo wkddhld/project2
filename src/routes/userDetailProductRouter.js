@@ -8,7 +8,7 @@ router.get('/:productNumber', async (req, res, next) => {
         const { productNumber } = req.params;
 
         // productNumber와 일치하는 상품이 없는 경우
-        const foundData = await Product.findOne({ number: Number(productNumber) }).lean();
+        const foundData = await Product.findOne({ number:Number(productNumber) }).lean();
 
         if (!Number.isInteger(Number(productNumber)) || foundData === null) {
             const err = new Error('요청하신 상품을 찾을 수 없습니다.');

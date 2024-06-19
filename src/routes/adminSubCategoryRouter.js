@@ -8,9 +8,9 @@ router.post('/', async (req, res, next) => {
     try {
         const { subCategoryNumber, subCategoryName, categoryNumber } = req.body;
 
-        // 수정하려는 대분류 카테고리 번호가 숫자값이 아니거나 2자리 초과일 경우
-        if (!Number.isInteger(categoryNumber) || categoryNumber.toString().length > 2) {
-            const err = new Error('대분류 카테고리는 2자리 이하의 숫자이어야 합니다.');
+        // 수정하려는 대분류 카테고리 번호가 숫자값이 아니거나 1자리 숫자가 아닌경우
+        if (!Number.isInteger(categoryNumber) || categoryNumber.toString().length !== 1) {
+            const err = new Error('대분류 카테고리는 1자리  숫자이어야 합니다.');
             err.statusCode = 400;
             return next(err);
         }
@@ -22,7 +22,6 @@ router.post('/', async (req, res, next) => {
             err.statusCode = 400;
             return next(err);
         }
-
         // 소분류 카테고리가 3자리가 아니거나 숫자값이 아닌 경우
         if (!Number.isInteger(Number(subCategoryNumber)) || subCategoryNumber.toString().length !== 3) {
             const err = new Error('소분류 카테고리는 3자리 숫자이어야 합니다.');
@@ -36,7 +35,6 @@ router.post('/', async (req, res, next) => {
             err.statusCode = 400;
             return next(err);
         }
-
         // 새로운 소분류 카테고리 생성
         const newSubCategory = await SubCategory.create({
             number: subCategoryNumber,
@@ -77,9 +75,9 @@ router.put('/:subCategoryNumber', async (req, res, next) => {
             return next(err);
         }
 
-        // 수정하려는 대분류 카테고리 번호가 숫자값이 아니거나 2자리 초과일 경우
-        if (!Number.isInteger(newCategoryNumber) || newCategoryNumber.toString().length > 2) {
-            const err = new Error('대분류 카테고리는 2자리 이하의 숫자이어야 합니다.');
+        // 수정하려는 대분류 카테고리 번호가 숫자값이 아니거나 1자리 숫자아닌경우
+        if (!Number.isInteger(newCategoryNumber) || newCategoryNumber.toString().length !== 1) {
+            const err = new Error('대분류 카테고리는 1자리 숫자이어야 합니다.');
             err.statusCode = 400;
             return next(err);
         }
@@ -114,6 +112,7 @@ router.put('/:subCategoryNumber', async (req, res, next) => {
             err.statusCode = 400;
             return next(err);
         }
+        
         // 수정된 소분류 카테고리 정보 업데이트
         await SubCategory.updateOne(
             { number: Number(subCategoryNumber) },
