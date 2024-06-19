@@ -18,18 +18,18 @@ function generateNumericOrderNumber() {
 const verifyToken = (token, secretKey) => {
     try {
         return jwt.verify(token, secretKey);
-    } catch (err) {
-        if (err.name === 'TokenExpiredError') {
-            const error = new Error('토큰이 만료되었습니다. 다시 로그인 해주세요.');
-            error.statusCode = 401;
-            throw error;
+    } catch (e) {
+        if (e.name === 'TokenExpiredError') {
+            const err = new Error('토큰이 만료되었습니다. 다시 로그인 해주세요.');
+            err.statusCode = 401;
+            throw err;
         }
-        if (err.name === 'JsonWebTokenError') {
-            const error = new Error('유효하지 않거나 손상된 토큰입니다. 다시 로그인 해주세요.');
-            error.statusCode = 401;
-            throw error;
+        if (e.name === 'JsonWebTokenError') {
+            const err = new Error('유효하지 않거나 손상된 토큰입니다. 다시 로그인 해주세요.');
+            err.statusCode = 401;
+            throw err;
         }
-        throw err; // 다른 예기치 않은 에러
+        throw e; // 다른 예기치 않은 에러
     }
 };
 
