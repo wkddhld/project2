@@ -6,25 +6,17 @@ const apiRouter = require('./routes');
 const cookieParser = require('cookie-parser');
 const cors = require('cors');
 const path = require('path');
-const formData = require('express-form-data');
-const os = require('os');
 const app = express();
+
 // CORS 설정
 const corsOptions = {
     origin: 'http://localhost:5173', // 요청을 허용할 도메인
     credentials: true, // 쿠키를 포함한 요청을 허용
 };
 
-const formOptions = {
-    uploadDir: os.tmpdir(),
-    autoClean: true,
-};
-
 app.use(cors(corsOptions));
 app.use(express.json());
 app.use(express.urlencoded({ extended: false }));
-app.use(formData.parse(formOptions));
-
 // 쿠키 해석해서 json 객체로 만들어주는 친구, 없으면 우리가 직접 json으로 만들어줘야 함, 원래는 string 값으로 들어옴
 app.use(cookieParser());
 app.use('/api', apiRouter);
