@@ -1,6 +1,6 @@
-const express = require("express");
+const express = require('express');
 const router = express.Router();
-const {User} = require("../data");
+const { User } = require('../data');
 
 // 사용자 정보 조회
 router.get('/', async (req, res, next) => {
@@ -17,7 +17,7 @@ router.get('/', async (req, res, next) => {
         const user = await User.findById(res.locals.user._id).lean();
 
         // 유저가 존재하지 않을경우
-        if (!user) {
+        if (user === null || user === undefined) {
             const err = new Error('해당 유저를 찾을 수 없습니다.');
             err.statusCode = 404;
             return next(err);
@@ -33,6 +33,5 @@ router.get('/', async (req, res, next) => {
         next(e);
     }
 });
-
 
 module.exports = router;

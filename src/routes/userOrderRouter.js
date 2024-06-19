@@ -58,7 +58,7 @@ router.get('/', async (req, res, next) => {
 
         // 주문번호가 없을 시
         if (order.length === 0) {
-            return res.json({ err: null, data: { message: '주문 내역이 없습니다.' } });
+            return res.json({ err: null, data: { message: '주문 내역이 존재하지 않습니다.' } });
         }
 
         // 주문정보 전송
@@ -71,7 +71,7 @@ router.get('/', async (req, res, next) => {
 //주문생성
 router.post('/', async (req, res, next) => {
     try {
-        const { products, name, phoneNumber, email, postAddress, address, detailAddress, password, confirmPassword } =
+        const { products, name, phoneNumber, email, postNumber, address, detailAddress, password, confirmPassword } =
             req.body;
 
         // products가 안 들어왔거나, 배열 형태가 아니거나 상품이 하나도 없을 경우
@@ -82,14 +82,14 @@ router.post('/', async (req, res, next) => {
         }
 
         // 이름이  string type이 아니거나 빈 값일 경우
-        if (typeof name !== 'string' || name === '') {
+        if (typeof name !== 'string' || name === '' || name.trim() === '') {
             const err = new Error('이메일은 문자열이며 빈 값이 아니어야 합니다.');
             err.statusCode = 400;
             return next(err);
         }
 
         // 이메일이  string type이 아니거나 빈 값일 경우
-        if (typeof email !== 'string' || email === '') {
+        if (typeof email !== 'string' || email === '' || email.trim() === '') {
             const err = new Error('이메일은 문자열이며 빈 값이 아니어야 합니다.');
             err.statusCode = 400;
             return next(err);
@@ -103,28 +103,33 @@ router.post('/', async (req, res, next) => {
         }
 
         // 전화번호가  string type이 아니거나 빈 값이거나 길이가 11자리가 아닌 경우
-        if (typeof phoneNumber !== 'string' || phoneNumber === '' || phoneNumber.length !== 11) {
+        if (
+            typeof phoneNumber !== 'string' ||
+            phoneNumber === '' ||
+            phoneNumber.length !== 11 ||
+            phoneNumber.trim() === ''
+        ) {
             const err = new Error('전화번호는 문자열이며 빈 값이 아니어야 하고 11자리이어야 합니다.');
             err.statusCode = 400;
             return next(err);
         }
 
         // 우편번호 string type이 아니거나 빈 값인 경우
-        if (typeof postAddress !== 'string' || postAddress === '') {
+        if (typeof postNumber !== 'string' || postNumber === '' || postNumber.trim() === '') {
             const err = new Error('우편번호는 문자열이며 빈 값이 아니어야 합니다.');
             err.statusCode = 400;
             return next(err);
         }
 
         // 도로명 주소가 string type이 아니거나 빈 값인 경우
-        if (typeof address !== 'string' || address === '') {
+        if (typeof address !== 'string' || address === '' || address.trim() === '') {
             const err = new Error('도로명 주소는 문자열이며 빈 값이 아니어야 합니다.');
             err.statusCode = 400;
             return next(err);
         }
 
         // 상세 주소가  string type이 아니거나 빈 값인 경우
-        if (typeof detailAddress !== 'string' || detailAddress === '') {
+        if (typeof detailAddress !== 'string' || detailAddress === '' || detailAddress.trim() === '') {
             const err = new Error('상세 주소는 문자열이며 빈 값이 아니어야 합니다.');
             err.statusCode = 400;
             return next(err);
@@ -170,7 +175,7 @@ router.post('/', async (req, res, next) => {
                 products,
                 number: Number(generateNumericOrderNumber()),
                 name,
-                address: [postAddress, address, detailAddress],
+                address: [postNumber, address, detailAddress],
                 email,
                 phoneNumber,
                 orderState: '주문완료',
@@ -221,7 +226,7 @@ router.post('/', async (req, res, next) => {
             products,
             number: Number(generateNumericOrderNumber()),
             name,
-            address: [postAddress, address, detailAddress],
+            address: [postNumber, address, detailAddress],
             email,
             phoneNumber,
             orderState: '주문완료',
@@ -269,8 +274,6 @@ router.put('/:orderNumber', async (req, res, next) => {
         // orderNumber가 본인의 주문인지 아닌지 확인하는 절차
         const OrderCheck = await Order.find({ email: token.email }).lean();
 
-        let result;
-
         for (const check of OrderCheck) {
             if (check.number === Number(orderNumber)) {
                 try {
@@ -295,13 +298,6 @@ router.put('/:orderNumber', async (req, res, next) => {
                     next(err);
                 }
             }
-        }
-
-        // update가 제대로 됐는지 확인하는 코드
-        if (result.modifiedCount === 0) {
-            const err = new Error('주문을 찾을 수 없습니다.');
-            err.statusCode = 404;
-            return next(err);
         }
         res.json({ err: null, data: { message: '주문이 취소되었습니다.' } });
     } catch (e) {
