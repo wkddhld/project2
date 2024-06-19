@@ -168,7 +168,7 @@ router.put('/withdrawal', async (req, res, next) => {
 
         await User.updateOne({ _id: user._id }, { isUser: false });
         res.clearCookie('userCookies');
-        res.json({ err: null, data: '탈퇴되었습니다.' });
+        res.json({ err: null, data: { message: '탈퇴되었습니다.' } });
     } catch (e) {
         next(e);
     }

@@ -22,8 +22,7 @@ const checkPasswordMiddleware = async (req, res, next) => {
         }
 
         // 비밀번호가 일치하는 경우
-        res.locals.body = true;
-        res.json('비밀번호 재확인 완료');
+        res.json({ err: null, data: { message: '비밀번호 재확인 완료' } });
     } catch (err) {
         next(err);
     }

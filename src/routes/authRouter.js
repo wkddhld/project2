@@ -277,7 +277,10 @@ router.post('/guest/sign-in', async (req, res, next) => {
             { expiresIn: '1h' }
         );
 
-        res.cookie('guestCookies', token, { httpOnly: true, secure: true }).json('인증 성공');
+        res.cookie('guestCookies', token, { httpOnly: true, secure: true }).json({
+            err: null,
+            message: '인증 성공하였습니다.',
+        });
     } catch (e) {
         next(e);
     }
