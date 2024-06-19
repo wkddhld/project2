@@ -42,6 +42,16 @@ router.post('/sign-up', async (req, res, next) => {
             return next(err);
         }
 
+        // 이메일 중복 체크
+        const foundEmail = await User.findOne({ email }).lean();
+
+        // foundEmail이 존재한다면
+        if (foundEmail !== null) {
+            const err = new Error('이미 존재하는 email입니다.');
+            err.statusCode = 400;
+            return next(err); // 매우 중요.  return 해주지 않을 경우 response가 간 다음에도 이후 코드들이 실행됨
+        }
+
         // password가 string type이 아니거나 빈 값일 경우
         if (typeof password !== 'string' || password === '') {
             const err = new Error('비밀번호는 문자열이며 빈 값이 아니어야 합니다.');
@@ -90,13 +100,6 @@ router.post('/sign-up', async (req, res, next) => {
         // agreement가 false인 경우
         if (!agreement) {
             const err = new Error('이용 약관에 동의가 필요합니다.');
-            err.statusCode = 400;
-            return next(err);
-        }
-
-        // 이메일 중복 체크했는지 확인하는 코드
-        if (isEmailCheck === false || isEmailCheck === undefined || isEmailCheck === null) {
-            const err = new Error('이메일 중복 확인 바랍니다.');
             err.statusCode = 400;
             return next(err);
         }
