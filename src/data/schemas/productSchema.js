@@ -16,7 +16,7 @@ const productSchema = new Schema(
         },
         stock: {
             type: Number,
-            required: true,
+            required: false,
         },
         information: {
             type: String,
@@ -43,7 +43,21 @@ const productSchema = new Schema(
     },
     {
         versionKey: false,
+        toJSON: { virtuals: true },
+        toObject: { virtuals: true },
     }
 );
+
+productSchema.virtual('category', {
+    ref: 'categories',
+    localField: 'categoryNumber',
+    foreignField: 'number',
+});
+
+productSchema.virtual('subCategory', {
+    ref: 'subcategories',
+    localField: 'subCategoryNumber',
+    foreignField: 'number',
+});
 
 module.exports = productSchema;
