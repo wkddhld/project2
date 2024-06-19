@@ -13,8 +13,6 @@ router.post('/', async (req, res, next) => {
             err.statusCode = 401;
             throw err;
         }
-        console.log(req.body.password);
-        console.log(user.password);
         const isPasswordCorrect = await bcrypt.compare(req.body.password, user.password);
 
         // 비밀번호가 일치하지 않는 경우
