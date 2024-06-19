@@ -236,7 +236,7 @@ router.put('/:productNumber', upload.single('file'), async (req, res, next) => {
         const data = await Product.updateOne(
             { number: Number(productNumber) },
             {
-                number: Number(newProductNumber),
+                number: Number(productNumber),
                 name,
                 price,
                 information,
