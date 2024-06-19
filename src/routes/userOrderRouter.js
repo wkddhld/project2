@@ -58,7 +58,7 @@ router.get('/', async (req, res, next) => {
 
         // 주문번호가 없을 시
         if (order.length === 0) {
-            return res.json({ err: null, data: '주문 내역이 없습니다.' });
+            return res.json({ err: null, data: { message: '주문 내역이 없습니다.' } });
         }
 
         // 주문정보 전송
@@ -155,9 +155,9 @@ router.post('/', async (req, res, next) => {
             }
 
             // 비밀번호 해시화
-            const hashPassword = await bcrypt.hash(password.toString(), 10);
-            // guest DB에 데이터 저장
+            const hashPassword = await bcrypt.hash(password, 10);
 
+            // guest DB에 데이터 저장
             await Guest.create({
                 email,
                 name,
@@ -303,7 +303,7 @@ router.put('/:orderNumber', async (req, res, next) => {
             err.statusCode = 404;
             return next(err);
         }
-        res.json({ err: null, data: '주문이 취소되었습니다.' });
+        res.json({ err: null, data: { message: '주문이 취소되었습니다.' } });
     } catch (e) {
         next(e);
     }

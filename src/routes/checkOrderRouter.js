@@ -206,7 +206,7 @@ router.post('/', async (req, res, next) => {
             return res
                 .cookie('guestCookies', token, { httpOnly: true, secure: true })
                 .status(201)
-                .json({ orderNumber: guestOrderData.number, message: '주문 완료되었습니다.' });
+                .json({ err: null, data: { orderNumber: guestOrderData.number, message: '주문 완료되었습니다.' } });
         }
         // data를 db에 저장
         const userData = {
@@ -282,7 +282,6 @@ router.put('/:orderNumber', async (req, res, next) => {
 
                     result = await Order.updateOne({ number: Number(orderNumber) }, { orderState: '주문취소' });
                     break; // 주문을 찾았으므로 반복 중단
-                    
                 } catch (error) {
                     next(err);
                 }
@@ -295,7 +294,7 @@ router.put('/:orderNumber', async (req, res, next) => {
             err.statusCode = 404;
             return next(err);
         }
-        res.json({ err: null, data: '주문이 취소되었습니다.' });
+        res.json({ err: null, data: { message: '주문이 취소되었습니다.' } });
     } catch (e) {
         next(e);
     }
