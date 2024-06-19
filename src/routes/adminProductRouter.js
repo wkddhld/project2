@@ -62,13 +62,8 @@ router.get('/', async (req, res, next) => {
 router.post('/', upload.single('file'), async (req, res, next) => {
     try {
         // 텍스트 데이터들은 req.body로 받음
-<<<<<<< HEAD
         const { name, price, stock, information, origin, categoryNumber, subCategoryNumber } = req.body;
-        console.log("오류");
-=======
-        const { name, price, information, origin, categoryName, subCategoryName } = req.body;
 
->>>>>>> 34820c6e64377bd7718aee31f2f07ccb793a4f03
         // 파일이 없을 경우 에러처리
         if (!req.file) {
             const err = new Error('이미지 업로드해주세요.');
