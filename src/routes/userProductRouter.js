@@ -32,7 +32,7 @@ router.get('/:categoryNumber', async (req, res, next) => {
     // 상품 데이터 반환
     return res.json({
       err: null,
-      data: categoryProducts.map(product => ({
+      data: categoryProducts.map((product) => ({
         number: product.number,
         name: product.name,
         price: product.price,
@@ -83,9 +83,7 @@ router.get('/:categoryNumber/:subCategoryNumber', async (req, res, next) => {
     // 조회하려는 subCategory가 categoryNumber에 속해있는지 확인
     // 소분류 카테고리가 대분류 카테고리에 포함되지 않는 경우
     if (foundSubCategory.mainCategoryNumber !== foundCategory.number) {
-      const err = new Error(
-        '해당 대분류 카테고리에 존재하지 않는 소분류 카테고리입니다.',
-      );
+      const err = new Error('해당 대분류 카테고리에 존재하지 않는 소분류 카테고리입니다.');
       err.statusCode = 404;
       return next(err);
     }
@@ -98,7 +96,7 @@ router.get('/:categoryNumber/:subCategoryNumber', async (req, res, next) => {
       err: null,
       data: {
         subCategoryName: foundSubCategory.name,
-        products: products.map(prod => {
+        products: products.map((prod) => {
           return {
             image: prod.image,
             name: prod.name,
