@@ -11,10 +11,7 @@ router.post('/', async (req, res, next) => {
     const { subCategoryNumber, subCategoryName, categoryNumber } = req.body;
 
     // 수정하려는 대분류 카테고리 번호가 숫자값이 아니거나 1자리 숫자가 아닌경우
-    if (
-      !Number.isInteger(categoryNumber) ||
-      categoryNumber.toString().length !== 1
-    ) {
+    if (!Number.isInteger(categoryNumber) || categoryNumber.toString().length !== 1) {
       const err = new Error('대분류 카테고리는 1자리  숫자이어야 합니다.');
       err.statusCode = 400;
       return next(err);
@@ -31,10 +28,7 @@ router.post('/', async (req, res, next) => {
     }
 
     // 소분류 카테고리가 3자리가 아니거나 숫자값이 아닌 경우
-    if (
-      !Number.isInteger(Number(subCategoryNumber)) ||
-      subCategoryNumber.toString().length !== 3
-    ) {
+    if (!Number.isInteger(Number(subCategoryNumber)) || subCategoryNumber.toString().length !== 3) {
       const err = new Error('소분류 카테고리는 3자리 숫자이어야 합니다.');
       err.statusCode = 400;
       return next(err);
@@ -46,9 +40,7 @@ router.post('/', async (req, res, next) => {
       subCategoryName === '' ||
       subCategoryName.trim() === ''
     ) {
-      const err = new Error(
-        '소분류 카테고리 이름은 문자열이거나 빈 값이 아니어야 합니다.',
-      );
+      const err = new Error('소분류 카테고리 이름은 문자열이거나 빈 값이 아니어야 합니다.');
       err.statusCode = 400;
       return next(err);
     }
@@ -110,9 +102,7 @@ router.put('/:subCategoryNumber', async (req, res, next) => {
       subCategoryName === '' ||
       subCategoryName.trim() === ''
     ) {
-      const err = new Error(
-        '소분류 카테고리 이름은 문자열이거나 빈 값이 아니어야 합니다.',
-      );
+      const err = new Error('소분류 카테고리 이름은 문자열이거나 빈 값이 아니어야 합니다.');
       err.statusCode = 400;
       return next(err);
     }
@@ -128,10 +118,7 @@ router.put('/:subCategoryNumber', async (req, res, next) => {
     }
 
     // 수정된 소분류 카테고리 정보 업데이트
-    await SubCategory.updateOne(
-      { number: Number(subCategoryNumber) },
-      { name: subCategoryName },
-    );
+    await SubCategory.updateOne({ number: Number(subCategoryNumber) }, { name: subCategoryName });
 
     return res.status(201).json({
       err: null,
@@ -171,7 +158,7 @@ router.delete('/:subCategoryNumber', async (req, res, next) => {
     }).lean();
 
     // foundProduct에 속하는 모든 이미지 파일 저장소에서 삭제
-    foundProduct.forEach(product => {
+    foundProduct.forEach((product) => {
       fs.unlinkSync('src/productImages/' + product.image);
     });
 

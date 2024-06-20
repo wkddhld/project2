@@ -17,9 +17,7 @@ const verifyToken = (token, secretKey) => {
       throw err;
     }
     if (e.name === 'JsonWebTokenError') {
-      const err = new Error(
-        '유효하지 않거나 손상된 토큰입니다. 다시 로그인 해주세요.',
-      );
+      const err = new Error('유효하지 않거나 손상된 토큰입니다. 다시 로그인 해주세요.');
       err.statusCode = 401;
       throw err;
     }
@@ -119,9 +117,7 @@ router.put('/', async (req, res, next) => {
     // 비밀번호 길이가 8글자 미만이거나 영문자 또는 숫자 또는 특수문자 포함 안 됐을 경우
     if (
       password.length < 8 ||
-      password.search(
-        /^(?=.*[A-Za-z])(?=.*\d)(?=.*[@$!%*?&])[A-Za-z\d@$!%*?&]+$/,
-      ) === -1
+      password.search(/^(?=.*[A-Za-z])(?=.*\d)(?=.*[@$!%*?&])[A-Za-z\d@$!%*?&]+$/) === -1
     ) {
       const err = new Error('비밀번호 양식이 맞지 않습니다.');
       err.statusCode = 400;
@@ -136,11 +132,7 @@ router.put('/', async (req, res, next) => {
     }
 
     // phoneNumber가 string type이 아니거나 빈 값일 경우
-    if (
-      typeof phoneNumber !== 'string' ||
-      phoneNumber === '' ||
-      phoneNumber.trim() === ''
-    ) {
+    if (typeof phoneNumber !== 'string' || phoneNumber === '' || phoneNumber.trim() === '') {
       const err = new Error('전화번호는 문자열이며 빈 값이 아니어야 합니다.');
       err.statusCode = 400;
       return next(err);

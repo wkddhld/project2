@@ -8,10 +8,10 @@ router.get('/', async (req, res, next) => {
   try {
     const categories = await Category.find().populate('subCategories').lean();
 
-    const categoriesWithSubCategories = categories.map(category => ({
+    const categoriesWithSubCategories = categories.map((category) => ({
       categoryNumber: category.number,
       categoryName: category.name,
-      subCategories: category.subCategories.map(subCategory => ({
+      subCategories: category.subCategories.map((subCategory) => ({
         subCategoryName: subCategory.name,
         subCategoryNumber: subCategory.number,
       })),

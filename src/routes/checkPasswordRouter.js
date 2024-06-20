@@ -17,25 +17,18 @@ router.post('/', async (req, res, next) => {
       throw err;
     }
 
-    const isPasswordCorrect = await bcrypt.compare(
-      req.body.password,
-      user.password,
-    );
+    const isPasswordCorrect = await bcrypt.compare(req.body.password, user.password);
     // 비밀번호가 일치하지 않는 경우
     if (isPasswordCorrect === false) {
-      const err = new Error(
-        '비밀번호가 일치하지 않습니다. 비밀번호를 다시 입력해주세요.',
-      );
+      const err = new Error('비밀번호가 일치하지 않습니다. 비밀번호를 다시 입력해주세요.');
       err.statusCode = 401;
       throw err;
     }
 
     // 비밀번호 재확인 절차를 위한 임시 토큰 발급
-    const token = jwt.sign(
-      { confirm: true },
-      process.env.CONFIRM_JWT_SECRET_KEY,
-      { expiresIn: '5m' },
-    );
+    const token = jwt.sign({ confirm: true }, process.env.CONFIRM_JWT_SECRET_KEY, {
+      expiresIn: '5m',
+    });
 
     // 비밀번호가 일치하는 경우
     res.cookie('tempCookies', token, { httpOnly: true }).json({

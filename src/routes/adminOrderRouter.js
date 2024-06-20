@@ -56,11 +56,7 @@ router.put('/:orderNumber', async (req, res, next) => {
     }
 
     // 비회원의 주문을 배송완료로 변경 시 user 정보 db에서 삭제
-    await Order.updateOne(
-      { number: Number(orderNumber) },
-      { orderState },
-      { new: true },
-    );
+    await Order.updateOne({ number: Number(orderNumber) }, { orderState }, { new: true });
 
     res.status(201).json({
       err: null,
