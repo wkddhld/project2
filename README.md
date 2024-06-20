@@ -73,5 +73,6 @@
 - 비밀번호 재확인 시 임시 토큰 쿠키에 담아 발급
 
 <center><img src="./image-7.png" width="400" height="200"></center>
+
 <center><img src="./image-8.png" width="450" height="250"></center>
 <center><img src="./image-9.png" width="400" height="250"></center>
