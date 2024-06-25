@@ -1,8 +1,5 @@
 module.exports = {
   env: {
-    // 브라우저의 document와 같은 객체 사용 여부
-    browser: true,
-    es2021: true,
     // node.js에서 console과 같은 전역변수 사용 여부
     node: true,
   },
@@ -10,10 +7,6 @@ module.exports = {
   parserOptions: {
     ecmaVersion: 12,
     sourceType: 'module',
-    // back-end이기 때문에 jsx false로 설정
-    ecmaFeatures: {
-      jsx: false,
-    },
   },
   plugins: ['prettier'],
   rules: {
