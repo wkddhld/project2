@@ -64,11 +64,12 @@ router.put('/:categoryNumber', async (req, res, next) => {
   try {
     const { categoryNumber } = req.params; // URL 파라미터에서 categoryNum 추출
     const { categoryName } = req.body; // 요청 본문에서 새로운 categoryName 추출
+    const intCategoryNumber = Number(categoryNumber);
 
-    const foundCategory = await Category.findOne({ number: Number(categoryNumber) }).lean();
+    const foundCategory = await Category.findOne({ number: intCategoryNumber }).lean();
     // params로 받은 대분류 카테고리 번호가 1자리 숫자가 아니거나 카테고리 db에 존재하지 않는 경우
     if (
-      !Number.isInteger(Number(categoryNumber)) ||
+      !Number.isInteger(intCategoryNumber) ||
       categoryNumber.length !== 1 ||
       foundCategory === null ||
       foundCategory === undefined
@@ -94,15 +95,22 @@ router.put('/:categoryNumber', async (req, res, next) => {
     }
 
     // categoryNumber에 해당하는 카테고리를  업데이트
-    await Category.updateOne(
-      { number: Number(categoryNumber) },
+    const updateData = await Category.updateOne(
+      { number: intCategoryNumber },
       { name: categoryName },
       { new: true }, // 업데이트된 문서를 반환하도록 설정
     );
 
-    return res.status(201).json({
+    // 업데이트가 정상적으로 되었는지 확인해주는 코드
+    if (updateData.modifiedCount === 0) {
+      const err = new Error('대분류 카테고리를 수정하는 과정에서 오류가 발생하였습니다.');
+      err.statusCode = 400;
+      return next(err);
+    }
+
+    return res.json({
       err: null,
-      data: { categoryNumber: Number(categoryNumber), categoryName },
+      data: { categoryNumber: intCategoryNumber, categoryName },
     });
   } catch (e) {
     next(e);
@@ -113,11 +121,11 @@ router.put('/:categoryNumber', async (req, res, next) => {
 router.delete('/:categoryNumber', async (req, res, next) => {
   try {
     const { categoryNumber } = req.params; // URL 파라미터에서 categoryNumber 추출
-
-    const foundCategory = await Category.findOne({ number: Number(categoryNumber) }).lean();
+    const intCategoryNumber = Number(categoryNumber);
+    const foundCategory = await Category.findOne({ number: intCategoryNumber }).lean();
     // categoryNumber가 1자리 숫자가 아니거나 카테고리 db에 존재하지 않는 경우
     if (
-      !Number.isInteger(Number(categoryNumber)) ||
+      !Number.isInteger(intCategoryNumber) ||
       categoryNumber.length > 2 ||
       foundCategory === null ||
       foundCategory === undefined
@@ -128,7 +136,7 @@ router.delete('/:categoryNumber', async (req, res, next) => {
     }
 
     // 대분류 카테고리에 속하는 상품들
-    const foundProduct = await Product.find({ categoryNumber: Number(categoryNumber) }).lean();
+    const foundProduct = await Product.find({ categoryNumber: intCategoryNumber }).lean();
     // foundProduct에 속하는 모든 이미지 파일 저장소에서 삭제
     foundProduct.forEach((product) => {
       fs.unlinkSync('src/productImages/' + product.image);
@@ -136,11 +144,11 @@ router.delete('/:categoryNumber', async (req, res, next) => {
 
     await Promise.all([
       // 대분류 카테고리에 속하는 상품 삭제
-      Product.deleteMany({ categoryNumber: Number(categoryNumber) }),
+      Product.deleteMany({ categoryNumber: intCategoryNumber }),
       // 소분류 카테고리 삭제
-      SubCategory.deleteMany({ mainCategoryNumber: Number(categoryNumber) }),
+      SubCategory.deleteMany({ mainCategoryNumber: intCategoryNumber }),
       // 대분류 카테고리 삭제
-      Category.deleteOne({ number: Number(categoryNumber) }),
+      Category.deleteOne({ number: intCategoryNumber }),
     ]);
 
     return res.status(204).json();
