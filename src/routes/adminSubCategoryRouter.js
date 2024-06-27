@@ -28,7 +28,7 @@ router.post('/', async (req, res, next) => {
     }
 
     // 소분류 카테고리가 3자리가 아니거나 숫자값이 아닌 경우
-    if (!Number.isInteger(Number(subCategoryNumber)) || subCategoryNumber.toString().length !== 3) {
+    if (!Number.isInteger(subCategoryNumber) || subCategoryNumber.toString().length !== 3) {
       const err = new Error('소분류 카테고리는 3자리 숫자이어야 합니다.');
       err.statusCode = 400;
       return next(err);
@@ -81,13 +81,14 @@ router.put('/:subCategoryNumber', async (req, res, next) => {
   try {
     const { subCategoryNumber } = req.params; // URL 파라미터에서 subCategoryNumber 추출
     const { subCategoryName } = req.body; // 요청 본문에서 새로운 subCategoryNumber, subCategoryName 추출
+    const intSubCategoryNumber = Number(subCategoryNumber);
 
     const foundSubCategory = await SubCategory.findOne({
-      number: Number(subCategoryNumber),
+      number: intSubCategoryNumber,
     }).lean();
     // 소분류 카테고리 번호가 3자리가 아니거나 숫자값이 아니거나 소분류 카테고리 db에 존재하지 않는 경우
     if (
-      !Number.isInteger(Number(subCategoryNumber)) ||
+      !Number.isInteger(intSubCategoryNumber) ||
       subCategoryNumber.toString().length !== 3 ||
       foundSubCategory === null ||
       foundSubCategory === undefined
@@ -118,9 +119,18 @@ router.put('/:subCategoryNumber', async (req, res, next) => {
     }
 
     // 수정된 소분류 카테고리 정보 업데이트
-    await SubCategory.updateOne({ number: Number(subCategoryNumber) }, { name: subCategoryName });
+    const updateData = await SubCategory.updateOne(
+      { number: intSubCategoryNumber },
+      { name: subCategoryName },
+    );
 
-    return res.status(201).json({
+    if (updateData.modifiedCount === 0) {
+      const err = new Error('소분류 카테고리 정보를 업데이트 하는 과정에서 오류가 발생했습니다.');
+      err.statusCode = 400;
+      return next(err);
+    }
+
+    return res.json({
       err: null,
       data: {
         subCategoryName: subCategoryName,
@@ -135,13 +145,14 @@ router.put('/:subCategoryNumber', async (req, res, next) => {
 router.delete('/:subCategoryNumber', async (req, res, next) => {
   try {
     const { subCategoryNumber } = req.params; // URL 파라미터에서 subCategoryNumber 추출
+    const intSubCategoryNumber = Number(subCategoryNumber);
 
     // 삭제하려는 소분류 카테고리가 DB에 존재하지 않는 경우
     const foundSubCategory = await SubCategory.findOne({
-      number: Number(subCategoryNumber),
+      number: intSubCategoryNumber,
     }).lean();
     if (
-      !Number.isInteger(Number(subCategoryNumber)) ||
+      !Number.isInteger(intSubCategoryNumber) ||
       subCategoryNumber.length !== 3 ||
       foundSubCategory === null ||
       foundSubCategory === undefined
@@ -154,7 +165,7 @@ router.delete('/:subCategoryNumber', async (req, res, next) => {
 
     // 소분류 카테고리에 속하는 상품들
     const foundProduct = await Product.find({
-      subCategoryNumber: Number(subCategoryNumber),
+      subCategoryNumber: intSubCategoryNumber,
     }).lean();
 
     // foundProduct에 속하는 모든 이미지 파일 저장소에서 삭제
@@ -165,14 +176,10 @@ router.delete('/:subCategoryNumber', async (req, res, next) => {
     // subCategoryNumber에 해당하는 소분류 카테고리를 삭제
     await Promise.all([
       // 소분류 카테고리에 해당하는 상품 삭제
-      Product.deleteMany({ subCategoryNumber: foundSubCategory.number }),
+      Product.deleteMany({ subCategoryNumber: intSubCategoryNumber }),
       // 소분류 카테고리 삭제
-      SubCategory.deleteOne({ number: foundSubCategory.number }),
+      SubCategory.deleteOne({ number: intSubCategoryNumber }),
     ]);
-
-    // 소분류 카테고리에 해당하는 상품 삭제
-
-    await Product.deleteMany({ subCategoryNumber: Number(subCategoryNumber) });
 
     return res.status(204).json();
   } catch (e) {
