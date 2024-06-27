@@ -223,6 +223,10 @@ router.post('/sign-in', async (req, res, next) => {
       return next(err);
     }
 
+    // 비회원 쿠키가 있을 경우
+    if (req.cookies.guestCookies) {
+      res.clearCookie('guestCookies');
+    }
     // 토큰 생성(이메일, 전화번호만 담김)
     const jwtToken = jwt.sign(
       {
@@ -358,6 +362,45 @@ router.post('/sign-out', isAuthenticatedMiddleware, async (req, res, next) => {
     }
   } catch (e) {
     next(e);
+  }
+});
+
+router.post('/checkPassword', async (req, res, next) => {
+  try {
+    const user = await User.findOne({ email: res.locals.user.email }).lean();
+
+    // 사용자가 없는 경우
+    if (user === null || user === undefined) {
+      const err = new Error('사용자를 찾을 수 없습니다.');
+      err.statusCode = 401;
+      throw err;
+    }
+
+    const isPasswordCorrect = await bcrypt.compare(req.body.password, user.password);
+    // 비밀번호가 일치하지 않는 경우
+    if (isPasswordCorrect === false) {
+      const err = new Error('비밀번호가 일치하지 않습니다. 비밀번호를 다시 입력해주세요.');
+      err.statusCode = 401;
+      throw err;
+    }
+
+    // 비밀번호가 일치하는 경우
+    const updateData = await User.updateOne(
+      { email: res.locals.user.email },
+      { updateLock: false },
+    );
+    
+    if (updateData.modifiedCount === 0) {
+      const err = new Error('회원 정보를 업데이트 하는 과정에서 오류가 발생하였습니다.');
+      err.statusCode = 400;
+      return next(err);
+    }
+    res.json({
+      err: null,
+      data: { message: '비밀번호 재확인 완료되었습니다.' },
+    });
+  } catch (err) {
+    next(err);
   }
 });
 

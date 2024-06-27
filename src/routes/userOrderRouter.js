@@ -8,6 +8,11 @@ const nodemailer = require('nodemailer');
 
 const { Order, Guest, User } = require('../data');
 
+// 주문 상태
+const orderCompleted = '주문완료';
+const orderCancel = '주문취소';
+const deliveryCompleted = '배송완료';
+
 // 주문번호 만들기
 const numbers = '123456789';
 const nanoid = customAlphabet(numbers, 10); // 1-9 랜덤으로 10자리 숫자 만들어주는 코드
@@ -117,9 +122,7 @@ router.post('/', async (req, res, next) => {
       phoneNumber.length !== 11 ||
       phoneNumber.trim() === ''
     ) {
-      const err = new Error(
-        '전화번호는 문자열이며 빈 값이 아니어야 하고 11자리이어야 합니다.',
-      );
+      const err = new Error('전화번호는 문자열이며 빈 값이 아니어야 하고 11자리이어야 합니다.');
       err.statusCode = 400;
       return next(err);
     }
@@ -139,21 +142,14 @@ router.post('/', async (req, res, next) => {
     }
 
     // 상세 주소가  string type이 아니거나 빈 값인 경우
-    if (
-      typeof detailAddress !== 'string' ||
-      detailAddress === '' ||
-      detailAddress.trim() === ''
-    ) {
+    if (typeof detailAddress !== 'string' || detailAddress === '' || detailAddress.trim() === '') {
       const err = new Error('상세 주소는 문자열이며 빈 값이 아니어야 합니다.');
       err.statusCode = 400;
       return next(err);
     }
 
     // 쿠키가 없거나 guestCookies 가지고 있으면 비회원
-    if (
-      (req.cookies && Object.keys(req.cookies).length === 0) ||
-      req.cookies.guestCookies
-    ) {
+    if ((req.cookies && Object.keys(req.cookies).length === 0) || req.cookies.guestCookies) {
       // 주문 작성 시 입력한 이메일이 회원 db에 존재하는 경우
       const foundEmail = await User.findOne({
         email,
@@ -189,7 +185,7 @@ router.post('/', async (req, res, next) => {
         address: [postNumber, address, detailAddress],
         email,
         phoneNumber,
-        orderState: '주문완료',
+        orderState: orderCompleted,
       };
 
       // 비회원 주문 정보를 주문 DB에 저장
@@ -258,7 +254,7 @@ router.post('/', async (req, res, next) => {
       address: [postNumber, address, detailAddress],
       email,
       phoneNumber,
-      orderState: '주문완료',
+      orderState: orderCompleted,
     };
 
     const userOrder = new Order(userData);
@@ -282,6 +278,7 @@ router.put('/:orderNumber', async (req, res, next) => {
     // 주문 정보 받아오기
     const { orderNumber } = req.params;
     const { guestCookies, userCookies } = req.cookies;
+    const intOrderNumber = Number(orderNumber);
 
     if (!guestCookies && !userCookies) {
       const err = new Error('접근 권한이 없습니다.');
@@ -297,7 +294,7 @@ router.put('/:orderNumber', async (req, res, next) => {
     }
 
     // 주문번호가 숫자가 아닌 경우
-    if (!Number.isInteger(Number(orderNumber))) {
+    if (!Number.isInteger(intOrderNumber)) {
       const err = new Error('해당하는 주문 내역을 찾을 수 없습니다.');
       err.statusCode = 404;
       return next(err);
@@ -309,29 +306,35 @@ router.put('/:orderNumber', async (req, res, next) => {
     }).lean();
 
     for (const check of OrderCheck) {
-      if (check.number === Number(orderNumber)) {
+      if (check.number === intOrderNumber) {
         try {
           // 이미 취소된 주문인지 체크해주는 코드
           const foundOrder = await Order.findOne({
-            number: Number(orderNumber),
+            number: intOrderNumber,
           }).lean();
-          if (foundOrder.orderState === '주문취소') {
+          if (foundOrder.orderState === orderCancel) {
             const err = new Error('이미 취소된 주문입니다.');
             err.statusCode = 400;
             return next(err);
           }
 
-          if (foundOrder.orderState === '배송완료') {
+          if (foundOrder.orderState === deliveryCompleted) {
             const err = new Error('배송 완료된 상품이라 주문 취소가 불가합니다.');
             err.statusCode = 400;
             return next(err);
           }
 
-          result = await Order.updateOne(
-            { number: Number(orderNumber) },
-            { orderState: '주문취소' },
+          const updateData = await Order.updateOne(
+            { number: intOrderNumber },
+            { orderState: orderCancel },
           );
 
+          // 주문 취소가 정상적으로 이루어졌는지 확인하는 코드
+          if (updateData.modifiedCount === 0) {
+            const err = new Error('주문을 취소하는 과정에서 오류가 발생했습니다.');
+            err.statusCode = 400;
+            return next(err);
+          }
           break; // 주문을 찾았으므로 반복 중단
         } catch (error) {
           next(err);

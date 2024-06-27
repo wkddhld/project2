@@ -163,16 +163,17 @@ router.put('/:productNumber', upload.single('file'), async (req, res, next) => {
   try {
     const { productNumber } = req.params;
     const { name, price, information, categoryName, subCategoryName } = req.body;
+    const intProductNumber = Number(productNumber);
 
     // productNumber가 number type이 아닐 경우 에러 핸들러로 에러 보냄
-    if (!Number.isInteger(Number(productNumber))) {
+    if (!Number.isInteger(intProductNumber)) {
       const err = new Error('요청하는 상품을 찾을 수 없습니다.');
       err.statusCode = 404;
       return next(err);
     }
 
     const foundProduct = await Product.findOne({
-      number: Number(productNumber),
+      number: intProductNumber,
     }).lean();
     // productNumber에 해당하는 상품을 찾지 못할 경우 에러 핸들러로 에러 보냄
     if (foundProduct === null) {
@@ -234,9 +235,9 @@ router.put('/:productNumber', upload.single('file'), async (req, res, next) => {
       fs.unlinkSync('src/productImages/' + foundProduct.image);
 
       const updateData = await Product.updateOne(
-        { number: Number(productNumber) },
+        { number: intProductNumber },
         {
-          number: Number(productNumber),
+          number: intProductNumber,
           name,
           price,
           image: filename,
@@ -246,14 +247,21 @@ router.put('/:productNumber', upload.single('file'), async (req, res, next) => {
         },
       );
 
-      return res.status(201).json({ err: null, data: updateData });
+      // 업데이트가 정상적으로 되었는지 확인해주는 코드
+      if (updateData.modifiedCount === 0) {
+        const err = new Error('상품을 업데이트 하는 과정에서 오류가 발생했습니다.');
+        err.statusCode = 400;
+        return next(err);
+      }
+
+      return res.json({ err: null, data: updateData });
     }
 
     // 상품 업데이트
-    const data = await Product.updateOne(
-      { number: Number(productNumber) },
+    const updateData = await Product.updateOne(
+      { number: intProductNumber },
       {
-        number: Number(productNumber),
+        number: intProductNumber,
         name,
         price,
         information,
@@ -262,7 +270,14 @@ router.put('/:productNumber', upload.single('file'), async (req, res, next) => {
       },
     );
 
-    res.status(201).json({ err: null, data: data });
+    // 업데이트가 정상적으로 되었는지 확인해주는 코드
+    if (updateData.modifiedCount === 0) {
+      const err = new Error('상품을 업데이트 하는 과정에서 오류가 발생했습니다.');
+      err.statusCode = 400;
+      return next(err);
+    }
+
+    res.json({ err: null, data: updateData });
   } catch (e) {
     next(e);
   }
@@ -271,12 +286,14 @@ router.put('/:productNumber', upload.single('file'), async (req, res, next) => {
 // 상품 삭제
 router.delete('/:productNumber', async (req, res, next) => {
   const { productNumber } = req.params;
+  const intProductNumber = Number(productNumber);
 
   // productNumber가 숫자가 아니거나 DB에 해당 상품이 없을 경우
   const foundData = await Product.findOne({
-    number: Number(productNumber),
+    number: intProductNumber,
   }).lean();
-  if (!Number.isInteger(Number(productNumber)) || foundData === null || foundData === undefined) {
+
+  if (!Number.isInteger(intProductNumber) || foundData === null || foundData === undefined) {
     const err = new Error('요청하는 상품을 찾을 수 없습니다.');
     err.statusCode = 404;
     return next(err);
@@ -286,9 +303,16 @@ router.delete('/:productNumber', async (req, res, next) => {
   fs.unlinkSync('src/productImages/' + foundData.image);
 
   // productNumber와 일치하는 이미지와 상품 삭제
-  await Product.deleteOne({
-    number: Number(productNumber),
+  const deleteData = await Product.deleteOne({
+    number: intProductNumber,
   });
+
+  // 삭제가 정상적으로 이루어졌는지 확인하는 코드
+  if (deleteData.deletedCount === 0) {
+    const err = new Error('상품을 삭제하는 과정에서 오류가 발생했습니다.');
+    err.statusCode = 400;
+    return next(err);
+  }
   res.status(204).json();
 });
 module.exports = router;
