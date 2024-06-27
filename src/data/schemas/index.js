@@ -6,10 +6,10 @@ const orderSchema = require('./orderSchema');
 const subCategorySchema = require('./subCategorySchema');
 
 module.exports = {
-    userSchema,
-    productSchema,
-    guestSchema,
-    categorySchema,
-    orderSchema,
-    subCategorySchema,
+  userSchema,
+  productSchema,
+  guestSchema,
+  categorySchema,
+  orderSchema,
+  subCategorySchema,
 };
